@@ -1,6 +1,6 @@
 {
 	"name": "finesse/micro-db",
-	"description": "A convenient PDO wrapper for using pure SQL with bindings",
+	"description": "A convenient PDO wrapper for using pure men SQL with bindings 💪",
 	"keywords": ["sql", "pdo", "database", "mysql"],
 	"type": "library",
 	"homepage": "https://github.com/FinesseRus/MicroDB",
@@ -16,6 +16,8 @@
 		"ext-pdo": "*"
 	},
 	"require-dev": {
+		"ext-Reflection": "*",
+		"ext-pdo_sqlite": "*",
 		"phpunit/phpunit": "^6.4",
 		"mockery/mockery": "^1.0"
 	},
