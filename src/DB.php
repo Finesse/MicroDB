@@ -25,9 +25,7 @@ class DB
         $this->pdo = $pdo;
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-        try {
-            $this->pdo->setAttribute(\PDO::ATTR_STRINGIFY_FETCHES, false);
-        } catch (\PDOException $e) {}
+        $this->pdo->setAttribute(\PDO::ATTR_STRINGIFY_FETCHES, false);
     }
 
     /**
@@ -120,7 +118,7 @@ class DB
             );
         }
 
-        if (is_null($value)) {
+        if ($value === null) {
             $type = \PDO::PARAM_NULL;
         } elseif (is_bool($value)) {
             $type = \PDO::PARAM_BOOL;
