@@ -5,7 +5,6 @@ namespace Finesse\MicroDB\Tests;
 use Finesse\MicroDB\DB;
 use Finesse\MicroDB\Exceptions\InvalidArgumentException;
 use Finesse\MicroDB\Exceptions\PDOException;
-use InvalidArgumentException as BaseInvalidArgumentException;
 
 /**
  * Tests the DB class.
@@ -71,7 +70,7 @@ class DBTest extends TestCase
         $this->invokeMethod($db, 'bindValue', [$statement, ':param', 'Banana']);
 
         $statement = $db->getPDO()->prepare('SELECT :param AS value');
-        $this->expectException(BaseInvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->invokeMethod($db, 'bindValue', [$statement, ':param', [1, 2, 3]]);
     }
 
@@ -105,7 +104,7 @@ class DBTest extends TestCase
 
         // Wrong arguments
         $statement = $db->getPDO()->prepare('SELECT :param AS value');
-        $this->expectException(BaseInvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->invokeMethod($db, 'bindValues', [$statement, [':param' => new \stdClass()]]);
     }
 

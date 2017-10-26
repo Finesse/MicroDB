@@ -4,7 +4,6 @@ namespace Finesse\MicroDB;
 
 use Finesse\MicroDB\Exceptions\InvalidArgumentException;
 use Finesse\MicroDB\Exceptions\PDOException;
-use InvalidArgumentException as BaseInvalidArgumentException;
 use PDOException as BasePDOException;
 
 /**
@@ -46,7 +45,7 @@ class DB
         try {
             return new static(new \PDO(...$pdoArgs));
         } catch (\Throwable $exception) {
-            throw static::wrapException($exception);
+            throw static::wrapPDOException($exception);
         }
     }
 
@@ -64,7 +63,7 @@ class DB
         try {
             return $this->executeQuery($query, $parameters)->fetchAll();
         } catch (\Throwable $exception) {
-            throw static::wrapException($exception);
+            throw static::wrapPDOException($exception);
         }
     }
 
@@ -83,7 +82,7 @@ class DB
             $row = $this->executeQuery($query, $parameters)->fetch();
             return $row === false ? null : $row;
         } catch (\Throwable $exception) {
-            throw static::wrapException($exception);
+            throw static::wrapPDOException($exception);
         }
     }
 
@@ -101,7 +100,7 @@ class DB
         try {
             return $this->executeQuery($query, $parameters)->rowCount();
         } catch (\Throwable $exception) {
-            throw static::wrapException($exception);
+            throw static::wrapPDOException($exception);
         }
     }
 
@@ -122,7 +121,7 @@ class DB
             $id = $this->pdo->lastInsertId($sequence);
             return is_numeric($id) ? (int)$id : $id;
         } catch (\Throwable $exception) {
-            throw static::wrapException($exception);
+            throw static::wrapPDOException($exception);
         }
     }
 
@@ -140,7 +139,7 @@ class DB
         try {
             return $this->executeQuery($query, $parameters)->rowCount();
         } catch (\Throwable $exception) {
-            throw static::wrapException($exception);
+            throw static::wrapPDOException($exception);
         }
     }
 
@@ -158,7 +157,7 @@ class DB
         try {
             return $this->executeQuery($query, $parameters)->rowCount();
         } catch (\Throwable $exception) {
-            throw static::wrapException($exception);
+            throw static::wrapPDOException($exception);
         }
     }
 
@@ -175,7 +174,7 @@ class DB
         try {
             $this->executeQuery($query, $parameters);
         } catch (\Throwable $exception) {
-            throw static::wrapException($exception);
+            throw static::wrapPDOException($exception);
         }
     }
 
@@ -230,13 +229,13 @@ class DB
      * @param \PDOStatement $statement PDO statement
      * @param string|int $parameter Value placeholder name or index (if the placeholder is not named)
      * @param string|int|float|boolean|null $value Value to bind
-     * @throws BaseInvalidArgumentException
+     * @throws InvalidArgumentException
      * @throws BasePDOException
      */
     protected function bindValue(\PDOStatement $statement, $parameter, $value)
     {
         if ($value !== null && !is_scalar($value)) {
-            throw new BaseInvalidArgumentException(
+            throw new InvalidArgumentException(
                 'Argument $value expected to be scalar or null, a '.gettype($value).' given'
             );
         }
@@ -255,24 +254,19 @@ class DB
     }
 
     /**
-     * Creates a library exception from a PHP exception if possible.
+     * Creates a library PDOException from a PHP PDOException if possible.
      *
-     * @param \Throwable $exception
-     * @return IException|\Throwable
+     * @param BasePDOException|\Throwable $exception
+     * @return PDOException|\Throwable
      */
-    protected static function wrapException(\Throwable $exception): \Throwable
+    protected static function wrapPDOException(\Throwable $exception): \Throwable
     {
-        if ($exception instanceof IException) {
+        if (!($exception instanceof BasePDOException)) {
             return $exception;
         }
-        if ($exception instanceof BasePDOException) {
-            $newException = new PDOException($exception->getMessage(), $exception->getCode(), $exception);
-            $newException->errorInfo = $exception->errorInfo;
-            return $newException;
-        }
-        if ($exception instanceof BaseInvalidArgumentException) {
-            return new InvalidArgumentException($exception->getMessage(), $exception->getCode(), $exception);
-        }
-        return $exception;
+
+        $newException = new PDOException($exception->getMessage(), $exception->getCode(), $exception);
+        $newException->errorInfo = $exception->errorInfo;
+        return $newException;
     }
 }
