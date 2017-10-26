@@ -198,7 +198,11 @@ class DBTest extends TestCase
         $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
         $db = new DB($pdo);
 
-        $insertedCount = $db->insert('INSERT INTO test (name, price) VALUES (?, ?)', ['Baran', 456.789]);
+        // Insert one row
+        $insertedCount = $db->insert(
+            'INSERT INTO test (name, price) VALUES (:name, :price)',
+            [':name' => 'Baran', ':price' => 456.789]
+        );
         $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
         $selectStatement->execute();
         $this->assertEquals(1, $insertedCount);
@@ -206,6 +210,7 @@ class DBTest extends TestCase
             ['id' => 1, 'name' => 'Baran', 'price' => 456.789]
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
+        // Insert some rows
         $insertedCount = $db->insert(
             'INSERT INTO test (name, price) VALUES (?, ?), (?, ?)',
             ['Ovca', 123, 'Wolk', -999]
@@ -219,7 +224,7 @@ class DBTest extends TestCase
             ['id' => 3, 'name' => 'Wolk', 'price' => -999],
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
-        $db = DB::create('sqlite::memory:');
+        // Insert using a bad query
         $this->expectException(\PDOException::class);
         $db->insert('I AM NOT A SQL');
     }
@@ -234,7 +239,11 @@ class DBTest extends TestCase
         $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
         $db = new DB($pdo);
 
-        $id = $db->insertGetId('INSERT INTO test (name, price) VALUES (?, ?)', ['Baran', 456.789]);
+        // Insert one row
+        $id = $db->insertGetId(
+            'INSERT INTO test (name, price) VALUES (:name, :price)',
+            [':name' => 'Baran', ':price' => 456.789]
+        );
         $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
         $selectStatement->execute();
         $this->assertEquals(1, $id);
@@ -242,6 +251,7 @@ class DBTest extends TestCase
             ['id' => 1, 'name' => 'Baran', 'price' => 456.789]
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
+        // Insert some rows
         $id = $db->insertGetId(
             'INSERT INTO test (name, price) VALUES (?, ?), (?, ?)',
             ['Ovca', 123, 'Wolk', -999]
@@ -255,8 +265,99 @@ class DBTest extends TestCase
             ['id' => 3, 'name' => 'Wolk', 'price' => -999],
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
-        $db = DB::create('sqlite::memory:');
+        // Insert using a bad query
         $this->expectException(\PDOException::class);
         $db->insertGetId('I AM NOT A SQL');
+    }
+
+    /**
+     * Tests the update method
+     */
+    public function testUpdate()
+    {
+        $pdo = new \PDO('sqlite::memory:');
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
+        $pdo->prepare("
+            INSERT INTO `test` (`id`, `name`, `price`)
+            VALUES
+                (1, 'Row 1', 14.5),
+                (2, 'Row 2', 0),
+                (3, 'Row 3', -12)
+        ")->execute();
+        $db = new DB($pdo);
+
+        // Update one row
+        $updatedCount = $db->update('UPDATE test SET name = ?, price = ? WHERE id = ?', ['Foo', 42, 2]);
+        $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
+        $selectStatement->execute();
+        $this->assertEquals(1, $updatedCount);
+        $this->assertEquals([
+            ['id' => 1, 'name' => 'Row 1', 'price' => 14.5],
+            ['id' => 2, 'name' => 'Foo', 'price' => 42],
+            ['id' => 3, 'name' => 'Row 3', 'price' => -12],
+        ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
+
+        // Update some rows
+        $updatedCount = $db->update('UPDATE test SET price = :price', [':price' => 36]);
+        $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
+        $selectStatement->execute();
+        $this->assertEquals(3, $updatedCount);
+        $this->assertEquals([
+            ['id' => 1, 'name' => 'Row 1', 'price' => 36],
+            ['id' => 2, 'name' => 'Foo', 'price' => 36],
+            ['id' => 3, 'name' => 'Row 3', 'price' => 36],
+        ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
+
+        // Update using a bad query
+        $this->expectException(\PDOException::class);
+        $db->update('I AM NOT A SQL');
+    }
+
+    /**
+     * Tests the delete method
+     */
+    public function testDelete()
+    {
+        $pdo = new \PDO('sqlite::memory:');
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
+        $pdo->prepare("
+            INSERT INTO `test` (`id`, `name`, `price`)
+            VALUES
+                (1, 'Row 1', 14.5),
+                (2, 'Row 2', 0),
+                (3, 'Row 3', 12),
+                (4, 'Row 4', -1.67),
+                (5, 'Row 5', 201),
+                (6, 'Row 6', 44.32312),
+                (7, 'Row 7', -12.435),
+                (8, 'Row 8', 0.2348729384)
+        ")->execute();
+        $db = new DB($pdo);
+
+        // Delete one row
+        $updatedCount = $db->delete('DELETE FROM test WHERE id = :id', [':id' => 5]);
+        $selectStatement = $pdo->prepare('SELECT id FROM test ORDER BY id');
+        $selectStatement->execute();
+        $this->assertEquals(1, $updatedCount);
+        $this->assertEquals(
+            [['id' => 1], ['id' => 2], ['id' => 3], ['id' => 4], ['id' => 6], ['id' => 7], ['id' => 8]],
+            $selectStatement->fetchAll(\PDO::FETCH_ASSOC)
+        );
+
+        // Delete some rows
+        $updatedCount = $db->delete('DELETE FROM test WHERE price > ?', [0]);
+        $selectStatement = $pdo->prepare('SELECT id FROM test ORDER BY id');
+        $selectStatement->execute();
+        $this->assertEquals(4, $updatedCount);
+        $this->assertEquals(
+            [['id' => 2], ['id' => 4], ['id' => 7]],
+            $selectStatement->fetchAll(\PDO::FETCH_ASSOC)
+        );
+
+        // Delete using a bad query
+        $this->expectException(\PDOException::class);
+        $db->delete('I AM NOT A SQL');
     }
 }

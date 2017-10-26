@@ -102,6 +102,34 @@ class DB
     }
 
     /**
+     * Performs a update query.
+     *
+     * @param string $query Full SQL query
+     * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
+     * @return int The number of updated rows
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     */
+    public function update(string $query, array $parameters = []): int
+    {
+        return $this->executeQuery($query, $parameters)->rowCount();
+    }
+
+    /**
+     * Performs a delete query.
+     *
+     * @param string $query Full SQL query
+     * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
+     * @return int The number of deleted rows
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     */
+    public function delete(string $query, array $parameters = []): int
+    {
+        return $this->executeQuery($query, $parameters)->rowCount();
+    }
+
+    /**
      * Returns the used PDO instance.
      *
      * @return \PDO You MUST NOT MODIFY it
