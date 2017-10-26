@@ -117,7 +117,7 @@ class DBTest extends TestCase
         $statement = \Mockery::mock(\PDOStatement::class);
         $statement->shouldReceive('bindValue')->once()->withArgs([1, 'Foo', \PDO::PARAM_STR]);
         $statement->shouldReceive('bindValue')->once()->withArgs([':number', 123, \PDO::PARAM_INT]);
-        $statement->shouldReceive('bindValue')->once()->withArgs([2, 'bar', \PDO::PARAM_STR]);
+        $statement->shouldReceive('bindValue')->once()->withArgs([3, 'bar', \PDO::PARAM_STR]);
         $this->invokeMethod($db, 'bindValues', [$statement, ['Foo', ':number' => 123, 'bar']]);
 
         // Wrong arguments
@@ -359,5 +359,56 @@ class DBTest extends TestCase
         // Delete using a bad query
         $this->expectException(\PDOException::class);
         $db->delete('I AM NOT A SQL');
+    }
+
+    /**
+     * Tests the statement method
+     */
+    public function testStatement()
+    {
+        $pdo = new \PDO('sqlite::memory:');
+        $db = new DB($pdo);
+
+        $db->statement('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
+        $db->statement('INSERT INTO test (name, price) VALUES (?, ?)', ['Johny', 991]);
+
+        // Is table created?
+        $selectStatement = $pdo->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='test'");
+        $selectStatement->execute();
+        $this->assertEquals(['name' => 'test'], $selectStatement->fetch(\PDO::FETCH_ASSOC));
+
+        // Is row created?
+        $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
+        $selectStatement->execute();
+        $this->assertEquals([
+            ['id' => 1, 'name' => 'Johny', 'price' => 991]
+        ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
+
+        // A statement with a bad query
+        $this->expectException(\PDOException::class);
+        $db->statement('I AM NOT A SQL');
+    }
+
+    /**
+     * Tests mixed parameters keys types (named and anonymous)
+     */
+    public function testMixedParametersKeys()
+    {
+        $pdo = new \PDO('sqlite::memory:');
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
+        $db = new DB($pdo);
+
+        $id = $db->insertGetId('INSERT INTO test VALUES (?, :name, ?)', [1, ':name' => 'A Name', 456]);
+        $this->assertEquals(
+            ['id' => 1, 'name' => 'A Name', 'price' => 456],
+            $db->selectFirst('SELECT * FROM test WHERE id = ?', [$id])
+        );
+
+        $id = $db->insertGetId('INSERT INTO test VALUES (:id, ?, :price)', [':id' => 2, 'Bill', ':price' => -12]);
+        $this->assertEquals(
+            ['id' => 2, 'name' => 'Bill', 'price' => -12],
+            $db->selectFirst('SELECT * FROM test WHERE id = ?', [$id])
+        );
     }
 }

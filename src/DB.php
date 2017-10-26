@@ -130,6 +130,19 @@ class DB
     }
 
     /**
+     * Performs a general query.
+     *
+     * @param string $query Full SQL query
+     * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     */
+    public function statement(string $query, array $parameters = [])
+    {
+        $this->executeQuery($query, $parameters);
+    }
+
+    /**
      * Returns the used PDO instance.
      *
      * @return \PDO You MUST NOT MODIFY it
@@ -166,8 +179,11 @@ class DB
      */
     protected function bindValues(\PDOStatement $statement, array $parameters)
     {
+        $number = 1;
+
         foreach ($parameters as $name => $value) {
-            $this->bindValue($statement, is_string($name) ? $name : $name + 1, $value);
+            $this->bindValue($statement, is_string($name) ? $name : $number, $value);
+            $number += 1;
         }
     }
 
