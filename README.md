@@ -16,7 +16,12 @@ $items = $database->select('SELECT * FROM items WHERE category_id = ?', [3]);
 
 You can combine it with a third-party SQL query builder to rock the database.
 
-It required the [PDO extension](http://php.net/manual/en/book.pdo.php) (available by default in most of servers).
+Key features:
+
+* No silly query builder, only clear SQL.
+* No external dependencies.
+  It required only the [PDO extension](http://php.net/manual/en/book.pdo.php) which is available by default in most of servers.
+* Exceptions on errors.
 
 
 ## Installation
@@ -34,7 +39,7 @@ composer require finesse/micro-db
 
 ### Create a `DB` instance
 
-To create a new `DB` issue call the `create` method passing 
+To create a new `DB` instance call the `create` method passing 
 [PDO constructor arguments](http://php.net/manual/en/pdo.construct.php).
 
 ```php
