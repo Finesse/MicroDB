@@ -99,7 +99,7 @@ $updatedCount = $database->update('UPDATE table SET status = 1 WHERE price < 100
 Delete rows and get the number of the deleted rows:
 
 ```php
-$deletedCount = $database->update('DELETE FROM table WHERE price > 1000');
+$deletedCount = $database->delete('DELETE FROM table WHERE price > 1000');
 ```
 
 ### Other queries
@@ -118,7 +118,11 @@ You should not insert values right to a SQL query because it can cause
 [SQL injections](https://en.wikipedia.org/wiki/SQL_injection). Instead use the binding:
 
 ```php
-$rows = $database->select('SELECT * FROM table WHERE name = ? LIMIT ?', ['Jack', 10]);
+// WRONG! Don't do it or you will be fired
+$rows = $database->select('SELECT * FROM table WHERE name = '.$name.' LIMIT '.$limit);
+
+// Good
+$rows = $database->select('SELECT * FROM table WHERE name = ? LIMIT ?', [$name, $limit]);
 ```
 
 Placeholders (`?`s) are safely replaced by the given values by the database server. All the above methods accept the 
@@ -141,7 +145,7 @@ The `Finesse\MicroDB\Exceptions\PDOException` is thrown in case of every databas
 
 The `Finesse\MicroDB\Exceptions\InvalidArgumentException` is thrown when the method arguments have a wrong format.
 
-All exception implement `Finesse\MicroDB\IException`.
+All exceptions implement `Finesse\MicroDB\IException`.
 
 
 ## Known problems
