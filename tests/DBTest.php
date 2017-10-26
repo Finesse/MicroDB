@@ -3,6 +3,9 @@
 namespace Finesse\MicroDB\Tests;
 
 use Finesse\MicroDB\DB;
+use Finesse\MicroDB\Exceptions\InvalidArgumentException;
+use Finesse\MicroDB\Exceptions\PDOException;
+use InvalidArgumentException as BaseInvalidArgumentException;
 
 /**
  * Tests the DB class.
@@ -12,26 +15,6 @@ use Finesse\MicroDB\DB;
 class DBTest extends TestCase
 {
     /**
-     * Tests that a given PDO object is not changed and that the inside PDO object can't be changed
-     */
-    public function testPdoImmutability()
-    {
-        $this->markTestSkipped('PDO is not designed for being cloned'); // https://stackoverflow.com/q/46923097/1118709
-
-        /** @var \PDO|\Mockery\MockInterface $pdo */
-        $pdo = \Mockery::spy(\PDO::class);
-        new DB($pdo);
-        $pdo->shouldNotHaveReceived('setAttribute');
-
-        $pdo = new \PDO('sqlite::memory:');
-        $connection = new DB($pdo);
-        $pdo1 = $connection->getPDO();
-        $pdo1->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_SILENT);
-        $pdo2 = $connection->getPDO();
-        $this->assertEquals(\PDO::ERRMODE_EXCEPTION, $pdo2->getAttribute(\PDO::ATTR_ERRMODE));
-    }
-
-    /**
      * Tests the create method and the constructor
      */
     public function testCreate()
@@ -39,7 +22,7 @@ class DBTest extends TestCase
         $db = DB::create('sqlite::memory:', null, null);
         $this->assertInstanceOf(DB::class, $db);
 
-        $this->expectException(\PDOException::class);
+        $this->expectException(PDOException::class);
         DB::create('foo:bar');
     }
 
@@ -88,7 +71,7 @@ class DBTest extends TestCase
         $this->invokeMethod($db, 'bindValue', [$statement, ':param', 'Banana']);
 
         $statement = $db->getPDO()->prepare('SELECT :param AS value');
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(BaseInvalidArgumentException::class);
         $this->invokeMethod($db, 'bindValue', [$statement, ':param', [1, 2, 3]]);
     }
 
@@ -122,7 +105,7 @@ class DBTest extends TestCase
 
         // Wrong arguments
         $statement = $db->getPDO()->prepare('SELECT :param AS value');
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(BaseInvalidArgumentException::class);
         $this->invokeMethod($db, 'bindValues', [$statement, [':param' => new \stdClass()]]);
     }
 
@@ -133,8 +116,8 @@ class DBTest extends TestCase
     {
         $pdo = new \PDO('sqlite::memory:');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
-        $pdo->prepare("
+        $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
+        $pdo->exec("
             INSERT INTO `test` (`id`, `name`, `price`)
             VALUES
                 (1, 'Row 1', 14.5),
@@ -145,7 +128,7 @@ class DBTest extends TestCase
                 (6, 'Row 6', 44.32312),
                 (7, 'Row 7', -12.435),
                 (8, 'Row 8', 0.2348729384)
-        ")->execute();
+        ");
         $db = new DB($pdo);
 
         $this->assertCount(8, $db->select('SELECT * FROM test'));
@@ -174,7 +157,7 @@ class DBTest extends TestCase
     public function testSelectWrongQuery()
     {
         $db = DB::create('sqlite::memory:');
-        $this->expectException(\PDOException::class);
+        $this->expectException(PDOException::class);
         $db->select('I AM NOT A SQL');
     }
 
@@ -184,7 +167,7 @@ class DBTest extends TestCase
     public function testSelectOneWrongQuery()
     {
         $db = DB::create('sqlite::memory:');
-        $this->expectException(\PDOException::class);
+        $this->expectException(PDOException::class);
         $db->selectFirst('I AM NOT A SQL');
     }
 
@@ -195,7 +178,7 @@ class DBTest extends TestCase
     {
         $pdo = new \PDO('sqlite::memory:');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
+        $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
         $db = new DB($pdo);
 
         // Insert one row
@@ -225,7 +208,7 @@ class DBTest extends TestCase
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
         // Insert using a bad query
-        $this->expectException(\PDOException::class);
+        $this->expectException(PDOException::class);
         $db->insert('I AM NOT A SQL');
     }
 
@@ -236,7 +219,7 @@ class DBTest extends TestCase
     {
         $pdo = new \PDO('sqlite::memory:');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
+        $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
         $db = new DB($pdo);
 
         // Insert one row
@@ -266,7 +249,7 @@ class DBTest extends TestCase
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
         // Insert using a bad query
-        $this->expectException(\PDOException::class);
+        $this->expectException(PDOException::class);
         $db->insertGetId('I AM NOT A SQL');
     }
 
@@ -277,14 +260,14 @@ class DBTest extends TestCase
     {
         $pdo = new \PDO('sqlite::memory:');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
-        $pdo->prepare("
+        $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
+        $pdo->exec("
             INSERT INTO `test` (`id`, `name`, `price`)
             VALUES
                 (1, 'Row 1', 14.5),
                 (2, 'Row 2', 0),
                 (3, 'Row 3', -12)
-        ")->execute();
+        ");
         $db = new DB($pdo);
 
         // Update one row
@@ -310,7 +293,7 @@ class DBTest extends TestCase
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
         // Update using a bad query
-        $this->expectException(\PDOException::class);
+        $this->expectException(PDOException::class);
         $db->update('I AM NOT A SQL');
     }
 
@@ -321,8 +304,8 @@ class DBTest extends TestCase
     {
         $pdo = new \PDO('sqlite::memory:');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
-        $pdo->prepare("
+        $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
+        $pdo->exec("
             INSERT INTO `test` (`id`, `name`, `price`)
             VALUES
                 (1, 'Row 1', 14.5),
@@ -333,7 +316,7 @@ class DBTest extends TestCase
                 (6, 'Row 6', 44.32312),
                 (7, 'Row 7', -12.435),
                 (8, 'Row 8', 0.2348729384)
-        ")->execute();
+        ");
         $db = new DB($pdo);
 
         // Delete one row
@@ -357,7 +340,7 @@ class DBTest extends TestCase
         );
 
         // Delete using a bad query
-        $this->expectException(\PDOException::class);
+        $this->expectException(PDOException::class);
         $db->delete('I AM NOT A SQL');
     }
 
@@ -385,7 +368,7 @@ class DBTest extends TestCase
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
         // A statement with a bad query
-        $this->expectException(\PDOException::class);
+        $this->expectException(PDOException::class);
         $db->statement('I AM NOT A SQL');
     }
 
@@ -396,7 +379,7 @@ class DBTest extends TestCase
     {
         $pdo = new \PDO('sqlite::memory:');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
+        $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
         $db = new DB($pdo);
 
         $id = $db->insertGetId('INSERT INTO test VALUES (?, :name, ?)', [1, ':name' => 'A Name', 456]);
@@ -410,5 +393,19 @@ class DBTest extends TestCase
             ['id' => 2, 'name' => 'Bill', 'price' => -12],
             $db->selectFirst('SELECT * FROM test WHERE id = ?', [$id])
         );
+    }
+
+    /**
+     * Tests that query methods throw proper exception on an invalid parameters argument
+     */
+    public function testInvalidParameters()
+    {
+        $pdo = new \PDO('sqlite::memory:');
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
+        $db = new DB($pdo);
+
+        $this->expectException(InvalidArgumentException::class);
+        $db->insert('INSERT INTO test VALUES (?, ?, ?)', [[1, 'Name', 111]]);
     }
 }

@@ -2,6 +2,11 @@
 
 namespace Finesse\MicroDB;
 
+use Finesse\MicroDB\Exceptions\InvalidArgumentException;
+use Finesse\MicroDB\Exceptions\PDOException;
+use InvalidArgumentException as BaseInvalidArgumentException;
+use PDOException as BasePDOException;
+
 /**
  * Wraps a PDO object for more convenient usage.
  *
@@ -33,12 +38,16 @@ class DB
      *
      * @param array ...$pdoArgs Arguments for the PDO constructor
      * @return static
-     * @throws \PDOException
+     * @throws PDOException
      * @see http://php.net/manual/en/pdo.construct.php Arguments reference
      */
     public static function create(...$pdoArgs): self
     {
-        return new static(new \PDO(...$pdoArgs));
+        try {
+            return new static(new \PDO(...$pdoArgs));
+        } catch (\Throwable $exception) {
+            throw static::wrapException($exception);
+        }
     }
 
     /**
@@ -47,12 +56,16 @@ class DB
      * @param string $query Full SQL query
      * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
      * @return array[] Array of the result rows. Result row is an array indexed by columns.
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
+     * @throws InvalidArgumentException
+     * @throws PDOException
      */
     public function select(string $query, array $parameters = []): array
     {
-        return $this->executeQuery($query, $parameters)->fetchAll();
+        try {
+            return $this->executeQuery($query, $parameters)->fetchAll();
+        } catch (\Throwable $exception) {
+            throw static::wrapException($exception);
+        }
     }
 
     /**
@@ -61,13 +74,17 @@ class DB
      * @param string $query Full SQL query
      * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
      * @return array|null An array indexed by columns. Null if nothing is found.
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
+     * @throws InvalidArgumentException
+     * @throws PDOException
      */
     public function selectFirst(string $query, array $parameters = [])
     {
-        $row = $this->executeQuery($query, $parameters)->fetch();
-        return $row === false ? null : $row;
+        try {
+            $row = $this->executeQuery($query, $parameters)->fetch();
+            return $row === false ? null : $row;
+        } catch (\Throwable $exception) {
+            throw static::wrapException($exception);
+        }
     }
 
     /**
@@ -76,12 +93,16 @@ class DB
      * @param string $query Full SQL query
      * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
      * @return int
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
+     * @throws InvalidArgumentException
+     * @throws PDOException
      */
     public function insert(string $query, array $parameters = []): int
     {
-        return $this->executeQuery($query, $parameters)->rowCount();
+        try {
+            return $this->executeQuery($query, $parameters)->rowCount();
+        } catch (\Throwable $exception) {
+            throw static::wrapException($exception);
+        }
     }
 
     /**
@@ -91,14 +112,18 @@ class DB
      * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
      * @param string|null $sequence Name of the sequence object from which the ID should be returned
      * @return int|string
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
+     * @throws InvalidArgumentException
+     * @throws PDOException
      */
     public function insertGetId(string $query, array $parameters = [], string $sequence = null)
     {
-        $this->executeQuery($query, $parameters);
-        $id = $this->pdo->lastInsertId($sequence);
-        return is_numeric($id) ? (int)$id : $id;
+        try {
+            $this->executeQuery($query, $parameters);
+            $id = $this->pdo->lastInsertId($sequence);
+            return is_numeric($id) ? (int)$id : $id;
+        } catch (\Throwable $exception) {
+            throw static::wrapException($exception);
+        }
     }
 
     /**
@@ -107,12 +132,16 @@ class DB
      * @param string $query Full SQL query
      * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
      * @return int The number of updated rows
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
+     * @throws InvalidArgumentException
+     * @throws PDOException
      */
     public function update(string $query, array $parameters = []): int
     {
-        return $this->executeQuery($query, $parameters)->rowCount();
+        try {
+            return $this->executeQuery($query, $parameters)->rowCount();
+        } catch (\Throwable $exception) {
+            throw static::wrapException($exception);
+        }
     }
 
     /**
@@ -121,12 +150,16 @@ class DB
      * @param string $query Full SQL query
      * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
      * @return int The number of deleted rows
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
+     * @throws InvalidArgumentException
+     * @throws PDOException
      */
     public function delete(string $query, array $parameters = []): int
     {
-        return $this->executeQuery($query, $parameters)->rowCount();
+        try {
+            return $this->executeQuery($query, $parameters)->rowCount();
+        } catch (\Throwable $exception) {
+            throw static::wrapException($exception);
+        }
     }
 
     /**
@@ -134,12 +167,16 @@ class DB
      *
      * @param string $query Full SQL query
      * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
+     * @throws InvalidArgumentException
+     * @throws PDOException
      */
     public function statement(string $query, array $parameters = [])
     {
-        $this->executeQuery($query, $parameters);
+        try {
+            $this->executeQuery($query, $parameters);
+        } catch (\Throwable $exception) {
+            throw static::wrapException($exception);
+        }
     }
 
     /**
@@ -158,8 +195,8 @@ class DB
      * @param string $query Full SQL query
      * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
      * @return \PDOStatement
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
+     * @throws InvalidArgumentException
+     * @throws BasePDOException
      */
     protected function executeQuery(string $query, array $parameters = []): \PDOStatement
     {
@@ -174,8 +211,8 @@ class DB
      *
      * @param \PDOStatement $statement PDO statement
      * @param array $parameters Parameters. The indexes are the names or numbers of the parameters.
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
+     * @throws InvalidArgumentException
+     * @throws BasePDOException
      */
     protected function bindValues(\PDOStatement $statement, array $parameters)
     {
@@ -193,13 +230,13 @@ class DB
      * @param \PDOStatement $statement PDO statement
      * @param string|int $parameter Value placeholder name or index (if the placeholder is not named)
      * @param string|int|float|boolean|null $value Value to bind
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
+     * @throws BaseInvalidArgumentException
+     * @throws BasePDOException
      */
     protected function bindValue(\PDOStatement $statement, $parameter, $value)
     {
         if ($value !== null && !is_scalar($value)) {
-            throw new \InvalidArgumentException(
+            throw new BaseInvalidArgumentException(
                 'Argument $value expected to be scalar or null, a '.gettype($value).' given'
             );
         }
@@ -215,5 +252,27 @@ class DB
         }
 
         $statement->bindValue($parameter, $value, $type);
+    }
+
+    /**
+     * Creates a library exception from a PHP exception if possible.
+     *
+     * @param \Throwable $exception
+     * @return IException|\Throwable
+     */
+    protected static function wrapException(\Throwable $exception): \Throwable
+    {
+        if ($exception instanceof IException) {
+            return $exception;
+        }
+        if ($exception instanceof BasePDOException) {
+            $newException = new PDOException($exception->getMessage(), $exception->getCode(), $exception);
+            $newException->errorInfo = $exception->errorInfo;
+            return $newException;
+        }
+        if ($exception instanceof BaseInvalidArgumentException) {
+            return new InvalidArgumentException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        return $exception;
     }
 }
