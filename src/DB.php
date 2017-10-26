@@ -52,10 +52,7 @@ class DB
      */
     public function select(string $query, array $parameters = []): array
     {
-        $statement = $this->pdo->prepare($query);
-        $this->bindValues($statement, $parameters);
-        $statement->execute();
-        return $statement->fetchAll();
+        return $this->executeQuery($query, $parameters)->fetchAll();
     }
 
     /**
@@ -67,13 +64,41 @@ class DB
      * @throws \InvalidArgumentException
      * @throws \PDOException
      */
-    public function selectOne(string $query, array $parameters = [])
+    public function selectFirst(string $query, array $parameters = [])
     {
-        $statement = $this->pdo->prepare($query);
-        $this->bindValues($statement, $parameters);
-        $statement->execute();
-        $row = $statement->fetch();
+        $row = $this->executeQuery($query, $parameters)->fetch();
         return $row === false ? null : $row;
+    }
+
+    /**
+     * Performs a insert query and returns the number of inserted rows.
+     *
+     * @param string $query Full SQL query
+     * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
+     * @return int
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     */
+    public function insert(string $query, array $parameters = []): int
+    {
+        return $this->executeQuery($query, $parameters)->rowCount();
+    }
+
+    /**
+     * Performs a insert query and returns the identifier of the last inserted row.
+     *
+     * @param string $query Full SQL query
+     * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
+     * @param string|null $sequence Name of the sequence object from which the ID should be returned
+     * @return int|string
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     */
+    public function insertGetId(string $query, array $parameters = [], string $sequence = null)
+    {
+        $this->executeQuery($query, $parameters);
+        $id = $this->pdo->lastInsertId($sequence);
+        return is_numeric($id) ? (int)$id : $id;
     }
 
     /**
@@ -84,6 +109,23 @@ class DB
     public function getPDO(): \PDO
     {
         return $this->pdo;
+    }
+
+    /**
+     * Executes a SQL query and returns the corresponding PDO statement.
+     *
+     * @param string $query Full SQL query
+     * @param array $parameters Parameters to bind. The indexes are the names or numbers of the parameters.
+     * @return \PDOStatement
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     */
+    protected function executeQuery(string $query, array $parameters = []): \PDOStatement
+    {
+        $statement = $this->pdo->prepare($query);
+        $this->bindValues($statement, $parameters);
+        $statement->execute();
+        return $statement;
     }
 
     /**

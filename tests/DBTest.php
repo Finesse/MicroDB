@@ -127,13 +127,13 @@ class DBTest extends TestCase
     }
 
     /**
-     * Tests the select and selectOne methods
+     * Tests the select and selectFirst methods
      */
     public function testSelect()
     {
         $pdo = new \PDO('sqlite::memory:');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $pdo->prepare("CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)")->execute();
+        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
         $pdo->prepare("
             INSERT INTO `test` (`id`, `name`, `price`)
             VALUES
@@ -159,13 +159,13 @@ class DBTest extends TestCase
         ], $db->select('SELECT name FROM test WHERE price < :price ORDER BY id DESC', [':price' => 0]));
         $this->assertEquals(
             ['id' => 3, 'name' => 'Row 3', 'price' => 12],
-            $db->selectOne('SELECT * FROM test WHERE name = ?', ['Row 3'])
+            $db->selectFirst('SELECT * FROM test WHERE name = ?', ['Row 3'])
         );
         $this->assertEquals(
             ['id' => 1, 'name' => 'Row 1', 'price' => 14.5],
-            $db->selectOne('SELECT * FROM test ORDER BY id')
+            $db->selectFirst('SELECT * FROM test ORDER BY id')
         );
-        $this->assertNull($db->selectOne('SELECT * FROM test WHERE name = :name', [':name' => 'Foo']));
+        $this->assertNull($db->selectFirst('SELECT * FROM test WHERE name = :name', [ ':name' => 'Foo']));
     }
 
     /**
@@ -179,12 +179,84 @@ class DBTest extends TestCase
     }
 
     /**
-     * Tests that the selectOne method throws exception on wrong query
+     * Tests that the selectFirst method throws exception on wrong query
      */
     public function testSelectOneWrongQuery()
     {
         $db = DB::create('sqlite::memory:');
         $this->expectException(\PDOException::class);
-        $db->selectOne('I AM NOT A SQL');
+        $db->selectFirst('I AM NOT A SQL');
+    }
+
+    /**
+     * Tests the insert method
+     */
+    public function testInsert()
+    {
+        $pdo = new \PDO('sqlite::memory:');
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
+        $db = new DB($pdo);
+
+        $insertedCount = $db->insert('INSERT INTO test (name, price) VALUES (?, ?)', ['Baran', 456.789]);
+        $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
+        $selectStatement->execute();
+        $this->assertEquals(1, $insertedCount);
+        $this->assertEquals([
+            ['id' => 1, 'name' => 'Baran', 'price' => 456.789]
+        ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
+
+        $insertedCount = $db->insert(
+            'INSERT INTO test (name, price) VALUES (?, ?), (?, ?)',
+            ['Ovca', 123, 'Wolk', -999]
+        );
+        $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
+        $selectStatement->execute();
+        $this->assertEquals(2, $insertedCount);
+        $this->assertEquals([
+            ['id' => 1, 'name' => 'Baran', 'price' => 456.789],
+            ['id' => 2, 'name' => 'Ovca', 'price' => 123],
+            ['id' => 3, 'name' => 'Wolk', 'price' => -999],
+        ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
+
+        $db = DB::create('sqlite::memory:');
+        $this->expectException(\PDOException::class);
+        $db->insert('I AM NOT A SQL');
+    }
+
+    /**
+     * Tests the insertGetId method
+     */
+    public function testInsertGetId()
+    {
+        $pdo = new \PDO('sqlite::memory:');
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $pdo->prepare('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)')->execute();
+        $db = new DB($pdo);
+
+        $id = $db->insertGetId('INSERT INTO test (name, price) VALUES (?, ?)', ['Baran', 456.789]);
+        $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
+        $selectStatement->execute();
+        $this->assertEquals(1, $id);
+        $this->assertEquals([
+            ['id' => 1, 'name' => 'Baran', 'price' => 456.789]
+        ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
+
+        $id = $db->insertGetId(
+            'INSERT INTO test (name, price) VALUES (?, ?), (?, ?)',
+            ['Ovca', 123, 'Wolk', -999]
+        );
+        $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
+        $selectStatement->execute();
+        $this->assertEquals(3, $id);
+        $this->assertEquals([
+            ['id' => 1, 'name' => 'Baran', 'price' => 456.789],
+            ['id' => 2, 'name' => 'Ovca', 'price' => 123],
+            ['id' => 3, 'name' => 'Wolk', 'price' => -999],
+        ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
+
+        $db = DB::create('sqlite::memory:');
+        $this->expectException(\PDOException::class);
+        $db->insertGetId('I AM NOT A SQL');
     }
 }
