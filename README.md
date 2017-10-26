@@ -147,6 +147,14 @@ The `Finesse\MicroDB\Exceptions\InvalidArgumentException` is thrown when the met
 
 All exceptions implement `Finesse\MicroDB\IException`.
 
+### Retrieve the underlying `PDO` object
+
+```php
+$pdo = $database->getPDO();
+```
+
+You _must not_ change the retrieved object, otherwise something unexpected will happen.
+
 
 ## Known problems
 
