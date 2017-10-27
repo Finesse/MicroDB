@@ -45,7 +45,7 @@ class DB
         try {
             return new static(new \PDO(...$pdoArgs));
         } catch (\Throwable $exception) {
-            throw static::wrapPDOException($exception);
+            throw static::wrapException($exception);
         }
     }
 
@@ -63,7 +63,7 @@ class DB
         try {
             return $this->executeQuery($query, $parameters)->fetchAll();
         } catch (\Throwable $exception) {
-            throw static::wrapPDOException($exception);
+            throw static::wrapException($exception);
         }
     }
 
@@ -82,7 +82,7 @@ class DB
             $row = $this->executeQuery($query, $parameters)->fetch();
             return $row === false ? null : $row;
         } catch (\Throwable $exception) {
-            throw static::wrapPDOException($exception);
+            throw static::wrapException($exception);
         }
     }
 
@@ -100,7 +100,7 @@ class DB
         try {
             return $this->executeQuery($query, $parameters)->rowCount();
         } catch (\Throwable $exception) {
-            throw static::wrapPDOException($exception);
+            throw static::wrapException($exception);
         }
     }
 
@@ -121,7 +121,7 @@ class DB
             $id = $this->pdo->lastInsertId($sequence);
             return is_numeric($id) ? (int)$id : $id;
         } catch (\Throwable $exception) {
-            throw static::wrapPDOException($exception);
+            throw static::wrapException($exception);
         }
     }
 
@@ -139,7 +139,7 @@ class DB
         try {
             return $this->executeQuery($query, $parameters)->rowCount();
         } catch (\Throwable $exception) {
-            throw static::wrapPDOException($exception);
+            throw static::wrapException($exception);
         }
     }
 
@@ -157,7 +157,7 @@ class DB
         try {
             return $this->executeQuery($query, $parameters)->rowCount();
         } catch (\Throwable $exception) {
-            throw static::wrapPDOException($exception);
+            throw static::wrapException($exception);
         }
     }
 
@@ -174,7 +174,7 @@ class DB
         try {
             $this->executeQuery($query, $parameters);
         } catch (\Throwable $exception) {
-            throw static::wrapPDOException($exception);
+            throw static::wrapException($exception);
         }
     }
 
@@ -254,19 +254,19 @@ class DB
     }
 
     /**
-     * Creates a library PDOException from a PHP PDOException if possible.
+     * Creates a library exception from a PHP exception if possible.
      *
-     * @param BasePDOException|\Throwable $exception
-     * @return PDOException|\Throwable
+     * @param \Throwable $exception
+     * @return IException|\Throwable
      */
-    protected static function wrapPDOException(\Throwable $exception): \Throwable
+    protected static function wrapException(\Throwable $exception): \Throwable
     {
-        if (!($exception instanceof BasePDOException)) {
-            return $exception;
+        if ($exception instanceof BasePDOException) {
+            $newException = new PDOException($exception->getMessage(), $exception->getCode(), $exception);
+            $newException->errorInfo = $exception->errorInfo;
+            return $newException;
         }
 
-        $newException = new PDOException($exception->getMessage(), $exception->getCode(), $exception);
-        $newException->errorInfo = $exception->errorInfo;
-        return $newException;
+        return $exception;
     }
 }

@@ -7,21 +7,28 @@
 [![Dependency Status](https://www.versioneye.com/php/finesse:micro-db/badge)](https://www.versioneye.com/php/finesse:micro-db)
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/86ca4104-f2d4-4064-a0d3-bba5a4aa2fe2/mini.png)](https://insight.sensiolabs.com/projects/86ca4104-f2d4-4064-a0d3-bba5a4aa2fe2)
 
-Like to use pure SQL but don't like to suffer with PDO, mysqli and etc.? Try this.
+Like to use pure SQL but don't like to suffer from PDO, mysqli or etc.? Try this.
 
 ```php
 $database = DB::create('mysql:host=localhost;dbname=my_database', 'user', 'pass');
 $items = $database->select('SELECT * FROM items WHERE category_id = ?', [3]);
 ```
 
-You can combine it with a third-party SQL query builder to rock the database.
-
 Key features:
 
-* No silly query builder, only clear SQL.
+* No silly query builder, only a good old SQL.
 * No external dependencies.
   It required only the [PDO extension](http://php.net/manual/en/book.pdo.php) which is available by default in most of servers.
+* Database object is delivered explicitly, not throw a static class.
 * Exceptions on errors.
+
+You can combine it with a third-party SQL query builder to rock the database. Examples of suitable query builders:
+[Nilportugues SQL Query Builder](https://github.com/nilportugues/php-sql-query-builder), 
+[Aura.SqlQuery](https://github.com/auraphp/Aura.SqlQuery),
+[Latitude](https://github.com/shadowhand/latitude),
+[Koine Query Builder](https://github.com/koinephp/QueryBuilder),
+[Phossa2 Query](https://github.com/phossa2/query),
+[Hydrahon](https://github.com/ClanCats/Hydrahon).
 
 
 ## Installation
@@ -125,17 +132,17 @@ $rows = $database->select('SELECT * FROM table WHERE name = '.$name.' LIMIT '.$l
 $rows = $database->select('SELECT * FROM table WHERE name = ? LIMIT ?', [$name, $limit]);
 ```
 
-Placeholders (`?`s) are safely replaced by the given values by the database server. All the above methods accept the 
+The database server replaces the placeholders (`?`s) safely by the given values. All the above methods accept the 
 list of the bound values as the second argument.
 
 You can also use named parameters:
 
 ```php
-$rows = $database->select('SELECT * FROM table WHERE name = :name LIMIT :limit', [':name' => 'Jack', ':limit' => 10]);
+$rows = $database->select('SELECT * FROM table WHERE name = :name LIMIT :limit', [':name' => $name, ':limit' => $limit]);
 ```
 
-You can even pass mixed parameters but it works only when the array of values has the same order as 
-the placeholders in the query text.
+You can even pass named and anonymous parameters in the same array but it works only when the array of values has the 
+same order as the placeholders in the query text.
 
 All scalar types of values are supported: string, integer, float, boolean and null.
 
@@ -158,7 +165,7 @@ You _must not_ change the retrieved object, otherwise something unexpected will 
 
 ## Known problems
 
-* `insertGetId` doesn't return the inserted row identifier for SQL server and Postgres.
+* `insertGetId` doesn't return the inserted row identifier for SQL Server and Postgres.
 
 Make a pull request or an issue if you need a problem to be fixed.
 
