@@ -21,8 +21,9 @@ class DBTest extends TestCase
         $db = DB::create('sqlite::memory:', null, null);
         $this->assertInstanceOf(DB::class, $db);
 
-        $this->expectException(PDOException::class);
-        DB::create('foo:bar');
+        $this->assertException(PDOException::class, function () {
+            DB::create('foo:bar');
+        });
     }
 
     /**
@@ -70,8 +71,10 @@ class DBTest extends TestCase
         $this->invokeMethod($db, 'bindValue', [$statement, ':param', 'Banana']);
 
         $statement = $db->getPDO()->prepare('SELECT :param AS value');
-        $this->expectException(InvalidArgumentException::class);
-        $this->invokeMethod($db, 'bindValue', [$statement, ':param', [1, 2, 3]]);
+        $this->assertException(InvalidArgumentException::class, function () use ($db, $statement) {
+            $this->invokeMethod($db, 'bindValue', [$statement, ':param', [1, 2, 3]]);
+        });
+
     }
 
     /**
@@ -104,8 +107,10 @@ class DBTest extends TestCase
 
         // Wrong arguments
         $statement = $db->getPDO()->prepare('SELECT :param AS value');
-        $this->expectException(InvalidArgumentException::class);
-        $this->invokeMethod($db, 'bindValues', [$statement, [':param' => new \stdClass()]]);
+        $this->assertException(InvalidArgumentException::class, function () use ($db, $statement) {
+            $this->invokeMethod($db, 'bindValues', [$statement, [':param' => new \stdClass()]]);
+        });
+
     }
 
     /**
@@ -148,26 +153,14 @@ class DBTest extends TestCase
             $db->selectFirst('SELECT * FROM test ORDER BY id')
         );
         $this->assertNull($db->selectFirst('SELECT * FROM test WHERE name = :name', [ ':name' => 'Foo']));
-    }
 
-    /**
-     * Tests that the select method throws exception on wrong query
-     */
-    public function testSelectWrongQuery()
-    {
-        $db = DB::create('sqlite::memory:');
-        $this->expectException(PDOException::class);
-        $db->select('I AM NOT A SQL');
-    }
-
-    /**
-     * Tests that the selectFirst method throws exception on wrong query
-     */
-    public function testSelectOneWrongQuery()
-    {
-        $db = DB::create('sqlite::memory:');
-        $this->expectException(PDOException::class);
-        $db->selectFirst('I AM NOT A SQL');
+        // Select using a bad query
+        $this->assertException(PDOException::class, function () use ($db) {
+            $db->select('I AM NOT A SQL');
+        });
+        $this->assertException(PDOException::class, function () use ($db) {
+            $db->selectFirst('I AM NOT A SQL');
+        });
     }
 
     /**
@@ -207,8 +200,9 @@ class DBTest extends TestCase
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
         // Insert using a bad query
-        $this->expectException(PDOException::class);
-        $db->insert('I AM NOT A SQL');
+        $this->assertException(PDOException::class, function () use ($db) {
+            $db->insert('I AM NOT A SQL');
+        });
     }
 
     /**
@@ -248,8 +242,9 @@ class DBTest extends TestCase
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
         // Insert using a bad query
-        $this->expectException(PDOException::class);
-        $db->insertGetId('I AM NOT A SQL');
+        $this->assertException(PDOException::class, function () use ($db) {
+            $db->insertGetId('I AM NOT A SQL');
+        });
     }
 
     /**
@@ -292,8 +287,9 @@ class DBTest extends TestCase
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
         // Update using a bad query
-        $this->expectException(PDOException::class);
-        $db->update('I AM NOT A SQL');
+        $this->assertException(PDOException::class, function () use ($db) {
+            $db->update('I AM NOT A SQL');
+        });
     }
 
     /**
@@ -339,8 +335,9 @@ class DBTest extends TestCase
         );
 
         // Delete using a bad query
-        $this->expectException(PDOException::class);
-        $db->delete('I AM NOT A SQL');
+        $this->assertException(PDOException::class, function () use ($db) {
+            $db->delete('I AM NOT A SQL');
+        });
     }
 
     /**
@@ -367,8 +364,9 @@ class DBTest extends TestCase
         ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
 
         // A statement with a bad query
-        $this->expectException(PDOException::class);
-        $db->statement('I AM NOT A SQL');
+        $this->assertException(PDOException::class, function () use ($db) {
+            $db->statement('I AM NOT A SQL');
+        });
     }
 
     /**
@@ -404,7 +402,9 @@ class DBTest extends TestCase
         $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
         $db = new DB($pdo);
 
-        $this->expectException(InvalidArgumentException::class);
-        $db->insert('INSERT INTO test VALUES (?, ?, ?)', [[1, 'Name', 111]]);
+        $this->assertException(InvalidArgumentException::class, function () use ($db) {
+            $db->insert('INSERT INTO test VALUES (?, ?, ?)', [[1, 'Name', 111]]);
+        });
+
     }
 }
