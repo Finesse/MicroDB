@@ -11,7 +11,7 @@ use PDOException as BasePDOException;
  *
  * @author Surgie
  */
-class DB
+class Connection
 {
     /**
      * @var \PDO The PDO instance. Throws exceptions on errors. The default fetch mode is FETCH_ASSOC.

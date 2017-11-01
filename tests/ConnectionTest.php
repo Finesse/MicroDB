@@ -2,7 +2,7 @@
 
 namespace Finesse\MicroDB\Tests;
 
-use Finesse\MicroDB\DB;
+use Finesse\MicroDB\Connection;
 use Finesse\MicroDB\Exceptions\InvalidArgumentException;
 use Finesse\MicroDB\Exceptions\PDOException;
 
@@ -11,18 +11,18 @@ use Finesse\MicroDB\Exceptions\PDOException;
  *
  * @author Surgie
  */
-class DBTest extends TestCase
+class ConnectionTest extends TestCase
 {
     /**
      * Tests the create method and the constructor
      */
     public function testCreate()
     {
-        $db = DB::create('sqlite::memory:', null, null);
-        $this->assertInstanceOf(DB::class, $db);
+        $db = Connection::create('sqlite::memory:', null, null);
+        $this->assertInstanceOf(Connection::class, $db);
 
         $this->assertException(PDOException::class, function () {
-            DB::create('foo:bar');
+            Connection::create('foo:bar');
         });
     }
 
@@ -31,7 +31,7 @@ class DBTest extends TestCase
      */
     public function testGetPDO()
     {
-        $db = new DB(new \PDO('sqlite::memory:'));
+        $db = new Connection(new \PDO('sqlite::memory:'));
         $pdo = $db->getPDO();
         $this->assertInstanceOf(\PDO::class, $pdo);
         $this->assertEquals(\PDO::ERRMODE_EXCEPTION, $pdo->getAttribute(\PDO::ATTR_ERRMODE));
@@ -43,7 +43,7 @@ class DBTest extends TestCase
      */
     public function testBindValue()
     {
-        $db = new DB(new \PDO('sqlite::memory:'));
+        $db = new Connection(new \PDO('sqlite::memory:'));
 
         /** @var \PDOStatement|\Mockery\MockInterface $pdo */
         $statement = \Mockery::mock(\PDOStatement::class);
@@ -83,7 +83,7 @@ class DBTest extends TestCase
     public function testBindValues()
     {
         /** @var \PDOStatement|\Mockery\MockInterface $pdo */
-        $db = new DB(new \PDO('sqlite::memory:'));
+        $db = new Connection(new \PDO('sqlite::memory:'));
 
         // Anonymous parameters
         $statement = \Mockery::mock(\PDOStatement::class);
@@ -133,7 +133,7 @@ class DBTest extends TestCase
                 (7, 'Row 7', -12.435),
                 (8, 'Row 8', 0.2348729384)
         ");
-        $db = new DB($pdo);
+        $db = new Connection($pdo);
 
         $this->assertCount(8, $db->select('SELECT * FROM test'));
         $this->assertEquals([
@@ -171,7 +171,7 @@ class DBTest extends TestCase
         $pdo = new \PDO('sqlite::memory:');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
-        $db = new DB($pdo);
+        $db = new Connection($pdo);
 
         // Insert one row
         $insertedCount = $db->insert(
@@ -213,7 +213,7 @@ class DBTest extends TestCase
         $pdo = new \PDO('sqlite::memory:');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
-        $db = new DB($pdo);
+        $db = new Connection($pdo);
 
         // Insert one row
         $id = $db->insertGetId(
@@ -262,7 +262,7 @@ class DBTest extends TestCase
                 (2, 'Row 2', 0),
                 (3, 'Row 3', -12)
         ");
-        $db = new DB($pdo);
+        $db = new Connection($pdo);
 
         // Update one row
         $updatedCount = $db->update('UPDATE test SET name = ?, price = ? WHERE id = ?', ['Foo', 42, 2]);
@@ -312,7 +312,7 @@ class DBTest extends TestCase
                 (7, 'Row 7', -12.435),
                 (8, 'Row 8', 0.2348729384)
         ");
-        $db = new DB($pdo);
+        $db = new Connection($pdo);
 
         // Delete one row
         $updatedCount = $db->delete('DELETE FROM test WHERE id = :id', [':id' => 5]);
@@ -346,7 +346,7 @@ class DBTest extends TestCase
     public function testStatement()
     {
         $pdo = new \PDO('sqlite::memory:');
-        $db = new DB($pdo);
+        $db = new Connection($pdo);
 
         $db->statement('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
         $db->statement('INSERT INTO test (name, price) VALUES (?, ?)', ['Johny', 991]);
@@ -377,7 +377,7 @@ class DBTest extends TestCase
         $pdo = new \PDO('sqlite::memory:');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
-        $db = new DB($pdo);
+        $db = new Connection($pdo);
 
         $id = $db->insertGetId('INSERT INTO test VALUES (?, :name, ?)', [1, ':name' => 'A Name', 456]);
         $this->assertEquals(
@@ -400,7 +400,7 @@ class DBTest extends TestCase
         $pdo = new \PDO('sqlite::memory:');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $pdo->exec('CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
-        $db = new DB($pdo);
+        $db = new Connection($pdo);
 
         $this->assertException(InvalidArgumentException::class, function () use ($db) {
             $db->insert('INSERT INTO test VALUES (?, ?, ?)', [[1, 'Name', 111]]);

@@ -10,19 +10,20 @@
 Like to use pure SQL but don't like to suffer from PDO, mysqli or etc.? Try this.
 
 ```php
-$database = DB::create('mysql:host=localhost;dbname=my_database', 'user', 'pass');
+$database = Connection::create('mysql:host=localhost;dbname=my_database', 'user', 'pass');
 $items = $database->select('SELECT * FROM items WHERE category_id = ?', [3]);
 ```
 
 Key features:
 
 * No silly query builder, only a good old SQL.
-* No external dependencies.
+* Very light, no external dependencies.
   It required only the [PDO extension](http://php.net/manual/en/book.pdo.php) which is available by default in most of servers.
 * Database object is delivered explicitly, not throw a static class.
 * Exceptions on errors.
 
 You can combine it with a third-party SQL query builder to rock the database. Examples of suitable query builders:
+[Query Scribe](https://github.com/FinesseRus/QueryScribe),
 [Nilportugues SQL Query Builder](https://github.com/nilportugues/php-sql-query-builder), 
 [Aura.SqlQuery](https://github.com/auraphp/Aura.SqlQuery),
 [Latitude](https://github.com/shadowhand/latitude),
@@ -44,25 +45,25 @@ composer require finesse/micro-db
 
 ## Reference
 
-### Create a `DB` instance
+### Create a `Connection` instance
 
-To create a new `DB` instance call the `create` method passing 
+To create a new `Connection` instance call the `create` method passing 
 [PDO constructor arguments](http://php.net/manual/en/pdo.construct.php).
 
 ```php
-use Finesse\MicroDB\DB;
+use Finesse\MicroDB\Connection;
 
-$database = DB::create('dns:string', 'username', 'password, ['options']);
+$database = Connection::create('dns:string', 'username', 'password, ['options']);
 ```
 
-Or pass a `PDO` instance to the constructor. But be careful: `DB` _changes_ the given `PDO` object and you _must not_ change the
-given object, otherwise something unexpected will happen.
+Or pass a `PDO` instance to the constructor. But be careful: `Connection` _changes_ the given `PDO` object and you 
+_must not_ change the given object, otherwise something unexpected will happen.
 
 ```php
-use Finesse\MicroDB\DB;
+use Finesse\MicroDB\Connection;
 
 $pdo = new PDO(/* ... */);
-$database = new DB($pdo);
+$database = new Connection($pdo);
 ```
 
 ### Select
@@ -165,7 +166,7 @@ You _must not_ change the retrieved object, otherwise something unexpected will 
 
 ## Known problems
 
-* `insertGetId` doesn't return the inserted row identifier for SQL Server and Postgres.
+* `insertGetId` doesn't return the inserted row identifier for SQL Server and PostgreSQL.
 
 Make a pull request or an issue if you need a problem to be fixed.
 
@@ -178,4 +179,3 @@ The project follows the [Semantic Versioning](http://semver.org).
 ## License
 
 MIT. See [the LICENSE](LICENSE) file for details.
-
