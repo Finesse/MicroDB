@@ -149,7 +149,14 @@ All scalar types of values are supported: string, integer, float, boolean and nu
 
 ### Error handling
 
-The `Finesse\MicroDB\Exceptions\PDOException` is thrown in case of every database query error.
+The `Finesse\MicroDB\Exceptions\PDOException` is thrown in case of every database query error. If an error is caused
+by a SQL query, the exception has the query text and bound values in the message. They are also available through the
+methods:
+
+```php
+$sql = $exception->getQuery();
+$bindings = $exception->getValues();
+``` 
 
 The `Finesse\MicroDB\Exceptions\InvalidArgumentException` is thrown when the method arguments have a wrong format.
 

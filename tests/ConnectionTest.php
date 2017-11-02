@@ -407,4 +407,37 @@ class ConnectionTest extends TestCase
         });
 
     }
+
+    /**
+     * Tests that a thrown PDOException contains a proper information
+     */
+    public function testPDOErrorInfo()
+    {
+        $this->assertException(PDOException::class, function () {
+            Connection::create('foo:bar');
+        }, function (PDOException $exception) {
+            $this->assertEquals('', $exception->getQuery());
+            $this->assertEquals([], $exception->getValues());
+        });
+
+        $db = Connection::create('sqlite::memory:');
+        $this->assertException(PDOException::class, function () use ($db) {
+            $db->select('INCORRECT SQL FOR ERROR', [
+                true,
+                false,
+                null,
+                1234,
+                'short string',
+                "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
+                new PDOException()
+            ]);
+        }, function (PDOException $exception) {
+            $this->assertStringEndsWith('; SQL query: (INCORRECT SQL FOR ERROR)'
+                . '; bound values: [true, false, null, 1234, "short string", "Lorem Ipsum is simply dummy text of the'
+                . ' printing and typesetting industry. Lorem Ipsum has been t..."'
+                . ', a Finesse\\MicroDB\\Exceptions\\PDOException instance]', $exception->getMessage());
+            $this->assertEquals('INCORRECT SQL FOR ERROR', $exception->getQuery());
+            $this->assertCount(7, $exception->getValues());
+        });
+    }
 }
