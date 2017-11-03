@@ -235,9 +235,11 @@ class Connection
     protected function bindValue(\PDOStatement $statement, $name, $value)
     {
         if ($value !== null && !is_scalar($value)) {
-            throw new InvalidArgumentException(
-                'Argument $value expected to be scalar or null, a '.gettype($value).' given'
-            );
+            throw new InvalidArgumentException(sprintf(
+                'Bound value %s expected to be scalar or null, a %s given',
+                is_int($name) ? '#'.$name : '`'.$name.'`',
+                gettype($value)
+            ));
         }
 
         if ($value === null) {

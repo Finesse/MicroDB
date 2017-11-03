@@ -39,7 +39,7 @@ class PDOException extends BasePDOException implements IException
             $message .= '; SQL query: ('.$query.')';
         }
         if ($values !== null) {
-            $message .= '; bound values: ['.implode(', ', array_map([$this, 'valueToString'], $values)).']';
+            $message .= '; bound values: '.$this->valueToString($values);
         }
 
         parent::__construct($message, 0, $previous);
@@ -106,6 +106,12 @@ class PDOException extends BasePDOException implements IException
         }
         if (is_object($value)) {
             return 'a '.get_class($value).' instance';
+        }
+        if (is_array($value)) {
+            return '['.implode(', ', array_map([$this, 'valueToString'], $value)).']';
+        }
+        if (is_resource($value)) {
+            return 'a resource';
         }
         return (string)$value;
     }

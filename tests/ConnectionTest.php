@@ -73,6 +73,11 @@ class ConnectionTest extends TestCase
         $statement = $db->getPDO()->prepare('SELECT :param AS value');
         $this->assertException(InvalidArgumentException::class, function () use ($db, $statement) {
             $this->invokeMethod($db, 'bindValue', [$statement, ':param', [1, 2, 3]]);
+        }, function (InvalidArgumentException $exception) {
+            $this->assertEquals(
+                'Bound value `:param` expected to be scalar or null, a array given',
+                $exception->getMessage()
+            );
         });
 
     }
@@ -108,7 +113,12 @@ class ConnectionTest extends TestCase
         // Wrong arguments
         $statement = $db->getPDO()->prepare('SELECT :param AS value');
         $this->assertException(InvalidArgumentException::class, function () use ($db, $statement) {
-            $this->invokeMethod($db, 'bindValues', [$statement, [':param' => new \stdClass()]]);
+            $this->invokeMethod($db, 'bindValues', [$statement, [new \stdClass()]]);
+        }, function (InvalidArgumentException $exception) {
+            $this->assertEquals(
+                'Bound value #1 expected to be scalar or null, a object given',
+                $exception->getMessage()
+            );
         });
 
     }
@@ -429,15 +439,20 @@ class ConnectionTest extends TestCase
                 1234,
                 'short string',
                 "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
-                new PDOException()
+                new PDOException(),
+                fopen('php://temp', 'r'),
+                [1, 2, 3]
             ]);
         }, function (PDOException $exception) {
-            $this->assertStringEndsWith('; SQL query: (INCORRECT SQL FOR ERROR)'
-                . '; bound values: [true, false, null, 1234, "short string", "Lorem Ipsum is simply dummy text of the'
-                . ' printing and typesetting industry. Lorem Ipsum has been t..."'
-                . ', a Finesse\\MicroDB\\Exceptions\\PDOException instance]', $exception->getMessage());
+            $this->assertStringEndsWith(
+                '; SQL query: (INCORRECT SQL FOR ERROR); bound values: [true, false, null, 1234, "short string"'
+                . ', "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been'
+                . ' t...", a Finesse\\MicroDB\\Exceptions\\PDOException instance, a resource, [1, 2, 3]]',
+                $exception->getMessage()
+            );
             $this->assertEquals('INCORRECT SQL FOR ERROR', $exception->getQuery());
-            $this->assertCount(7, $exception->getValues());
+            $this->assertCount(9, $exception->getValues());
+            $this->assertInstanceOf(\PDOException::class, $exception->getPrevious());
         });
     }
 }
