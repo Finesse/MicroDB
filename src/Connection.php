@@ -87,7 +87,7 @@ class Connection
     }
 
     /**
-     * Performs a insert query and returns the number of inserted rows.
+     * Performs an insert query and returns the number of inserted rows.
      *
      * @param string $query Full SQL query
      * @param array $values Values to bind. The indexes are the names or numbers of the values.
@@ -105,7 +105,7 @@ class Connection
     }
 
     /**
-     * Performs a insert query and returns the identifier of the last inserted row.
+     * Performs an insert query and returns the identifier of the last inserted row.
      *
      * @param string $query Full SQL query
      * @param array $values Values to bind. The indexes are the names or numbers of the values.
@@ -126,7 +126,7 @@ class Connection
     }
 
     /**
-     * Performs a update query.
+     * Performs an update query.
      *
      * @param string $query Full SQL query
      * @param array $values Values to bind. The indexes are the names or numbers of the values.
