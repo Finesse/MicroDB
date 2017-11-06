@@ -53,7 +53,7 @@ To create a new `Connection` instance call the `create` method passing
 ```php
 use Finesse\MicroDB\Connection;
 
-$database = Connection::create('dns:string', 'username', 'password, ['options']);
+$database = Connection::create('dsn:string', 'username', 'password, ['options']);
 ```
 
 Or pass a `PDO` instance to the constructor. But be careful: `Connection` _changes_ the given `PDO` object and you 
@@ -79,6 +79,9 @@ Select one row:
 ```php
 $row = $database->selectFirst('SELECT * FROM table'); // ['id' => 1, 'name' => 'Bill']
 ```
+
+The cell values are returned as they are returned by PDO. They are not casted automatically because casting can cause 
+data loss.
 
 ### Insert
 
@@ -127,13 +130,13 @@ You should not insert values right to a SQL query because it can cause
 
 ```php
 // WRONG! Don't do it or you will be fired
-$rows = $database->select('SELECT * FROM table WHERE name = '.$name.' LIMIT '.$limit);
+$rows = $database->select("SELECT * FROM table WHERE name = '".$name."' LIMIT ".$limit);
 
 // Good
 $rows = $database->select('SELECT * FROM table WHERE name = ? LIMIT ?', [$name, $limit]);
 ```
 
-The database server replaces the placeholders (`?`s) safely by the given values. All the above methods accept the 
+The database server replaces the placeholders (`?`s) safely with the given values. All the above methods accept the 
 list of the bound values as the second argument.
 
 You can also use named parameters:
@@ -175,7 +178,7 @@ You _must not_ change the retrieved object, otherwise something unexpected will 
 
 * `insertGetId` doesn't return the inserted row identifier for SQL Server and PostgreSQL.
 
-Make a pull request or an issue if you need a problem to be fixed.
+Make a pull request or an issue if you need the problem to be fixed.
 
 
 ## Versions compatibility

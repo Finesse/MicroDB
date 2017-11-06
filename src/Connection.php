@@ -9,6 +9,10 @@ use PDOException as BasePDOException;
 /**
  * Wraps a PDO object for more convenient usage.
  *
+ * Future features:
+ *  * todo: transations
+ *  * todo: PostgreSQL and SQL Server support
+ *
  * @author Surgie
  */
 class Connection
@@ -29,21 +33,32 @@ class Connection
         $this->pdo = $pdo;
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-        $this->pdo->setAttribute(\PDO::ATTR_STRINGIFY_FETCHES, false);
     }
 
     /**
-     * Creates the self instance.
+     * Creates a self instance. All the arguments are the arguments for the PDO constructor.
      *
-     * @param array ...$pdoArgs Arguments for the PDO constructor
+     * @param string $dsn
+     * @param string|null $username
+     * @param string|null $passwd
+     * @param array|null $options
      * @return static
      * @throws PDOException
      * @see http://php.net/manual/en/pdo.construct.php Arguments reference
      */
-    public static function create(...$pdoArgs): self
-    {
+    public static function create(
+        string $dsn,
+        string $username = null,
+        string $passwd = null,
+        array $options = null
+    ): self {
+        $defaultOptions = [
+            \PDO::ATTR_STRINGIFY_FETCHES => false
+        ];
+        $options = $options === null ? $defaultOptions : array_replace($defaultOptions, $options);
+
         try {
-            return new static(new \PDO(...$pdoArgs));
+            return new static(new \PDO($dsn, $username, $passwd, $options));
         } catch (\Throwable $exception) {
             throw static::wrapException($exception);
         }
