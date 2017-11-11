@@ -135,16 +135,16 @@ The lack of this method is that it doesn't take values to bind.
 
 ### Execute a file
 
-Execute the query from a file:
+Execute the query from a SQL file:
 
 ```php
-$database->import('path/to/file');
+$database->import('path/to/file.sql');
 ```
 
 Or from a resource:
 
 ```php
-$stream = fopen('path/to/file', 'r');
+$stream = fopen('path/to/file.sql', 'r');
 $database->import($stream);
 ```
 
@@ -188,9 +188,9 @@ $bindings = $exception->getValues();
 
 The `Finesse\MicroDB\Exceptions\InvalidArgumentException` is thrown when the method arguments have a wrong format.
 
-The `Finesse\MicroDB\Exceptions\FileException` is thrown on a file read fail.
+The `Finesse\MicroDB\Exceptions\FileException` is thrown on a file read error.
 
-All exceptions implement `Finesse\MicroDB\IException`.
+All the exceptions implement `Finesse\MicroDB\IException`.
 
 ### Retrieve the underlying `PDO` object
 
