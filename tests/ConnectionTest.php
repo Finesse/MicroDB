@@ -363,9 +363,9 @@ class ConnectionTest extends TestCase
         $db->statement('INSERT INTO test (name, price) VALUES (?, ?)', ['Johny', 991]);
 
         // Is table created?
-        $selectStatement = $pdo->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='test'");
-        $selectStatement->execute();
-        $this->assertEquals(['name' => 'test'], $selectStatement->fetch(\PDO::FETCH_ASSOC));
+        $this->assertNotEmpty($pdo
+            ->query("SELECT * FROM sqlite_master WHERE type='table' AND name='test'")
+            ->fetchAll());
 
         // Is row created?
         $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
@@ -394,9 +394,9 @@ class ConnectionTest extends TestCase
         ");
 
         // Is table created?
-        $selectStatement = $pdo->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='test'");
-        $selectStatement->execute();
-        $this->assertEquals(['name' => 'test'], $selectStatement->fetch(\PDO::FETCH_ASSOC));
+        $this->assertNotEmpty($pdo
+            ->query("SELECT * FROM sqlite_master WHERE type='table' AND name='test'")
+            ->fetchAll());
 
         // Is row created?
         $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
@@ -424,9 +424,9 @@ class ConnectionTest extends TestCase
             $file = tempnam(sys_get_temp_dir(), 'sql_');
             file_put_contents($file, 'CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
             $db->import($file);
-            $selectStatement = $pdo->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='test'");
-            $selectStatement->execute();
-            $this->assertEquals(['name' => 'test'], $selectStatement->fetch(\PDO::FETCH_ASSOC));
+            $this->assertNotEmpty($pdo
+                ->query("SELECT * FROM sqlite_master WHERE type='table' AND name='test'")
+                ->fetchAll());
         } finally {
             if ($file) {
                 unlink($file);
@@ -470,9 +470,8 @@ class ConnectionTest extends TestCase
         });
 
         // Unreadable resource
-        $resource = imagecreatetruecolor(1, 1);
-        $this->assertException(FileException::class, function () use ($db, $resource) {
-            $db->import($resource);
+        $this->assertException(FileException::class, function () use ($db) {
+            $db->import(imagecreatetruecolor(1, 1));
         }, function (FileException $exception) {
             $this->assertStringStartsWith('Failed to read from the resource', $exception->getMessage());
         });
