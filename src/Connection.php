@@ -2,6 +2,7 @@
 
 namespace Finesse\MicroDB;
 
+use Finesse\MicroDB\Exceptions\FileException;
 use Finesse\MicroDB\Exceptions\InvalidArgumentException;
 use Finesse\MicroDB\Exceptions\PDOException;
 use PDOException as BasePDOException;
@@ -55,10 +56,9 @@ class Connection
         $defaultOptions = [
             \PDO::ATTR_STRINGIFY_FETCHES => false
         ];
-        $options = $options === null ? $defaultOptions : array_replace($defaultOptions, $options);
 
         try {
-            return new static(new \PDO($dsn, $username, $passwd, $options));
+            return new static(new \PDO($dsn, $username, $passwd, array_replace($defaultOptions, $options ?? [])));
         } catch (\Throwable $exception) {
             throw static::wrapException($exception);
         }
@@ -76,7 +76,7 @@ class Connection
     public function select(string $query, array $values = []): array
     {
         try {
-            return $this->executeQuery($query, $values)->fetchAll();
+            return $this->executeStatement($query, $values)->fetchAll();
         } catch (\Throwable $exception) {
             throw static::wrapException($exception, $query, $values);
         }
@@ -94,7 +94,7 @@ class Connection
     public function selectFirst(string $query, array $values = [])
     {
         try {
-            $row = $this->executeQuery($query, $values)->fetch();
+            $row = $this->executeStatement($query, $values)->fetch();
             return $row === false ? null : $row;
         } catch (\Throwable $exception) {
             throw static::wrapException($exception, $query, $values);
@@ -113,7 +113,7 @@ class Connection
     public function insert(string $query, array $values = []): int
     {
         try {
-            return $this->executeQuery($query, $values)->rowCount();
+            return $this->executeStatement($query, $values)->rowCount();
         } catch (\Throwable $exception) {
             throw static::wrapException($exception, $query, $values);
         }
@@ -132,7 +132,7 @@ class Connection
     public function insertGetId(string $query, array $values = [], string $sequence = null)
     {
         try {
-            $this->executeQuery($query, $values);
+            $this->executeStatement($query, $values);
             $id = $this->pdo->lastInsertId($sequence);
             return is_numeric($id) ? (int)$id : $id;
         } catch (\Throwable $exception) {
@@ -152,7 +152,7 @@ class Connection
     public function update(string $query, array $values = []): int
     {
         try {
-            return $this->executeQuery($query, $values)->rowCount();
+            return $this->executeStatement($query, $values)->rowCount();
         } catch (\Throwable $exception) {
             throw static::wrapException($exception, $query, $values);
         }
@@ -170,14 +170,15 @@ class Connection
     public function delete(string $query, array $values = []): int
     {
         try {
-            return $this->executeQuery($query, $values)->rowCount();
+            return $this->executeStatement($query, $values)->rowCount();
         } catch (\Throwable $exception) {
             throw static::wrapException($exception, $query, $values);
         }
     }
 
     /**
-     * Performs a general query.
+     * Performs a general query. If the query contains multiple statements separated by a semicolon, only the first
+     * statement will be executed.
      *
      * @param string $query Full SQL query
      * @param array $values Values to bind. The indexes are the names or numbers of the values.
@@ -187,10 +188,54 @@ class Connection
     public function statement(string $query, array $values = [])
     {
         try {
-            $this->executeQuery($query, $values);
+            $this->executeStatement($query, $values);
         } catch (\Throwable $exception) {
             throw static::wrapException($exception, $query, $values);
         }
+    }
+
+    /**
+     * Performs a general query. It executes all the statements separated by a semicolon.
+     *
+     * @param string $query Full SQL query
+     * @throws PDOException
+     */
+    public function statements(string $query)
+    {
+        try {
+            $this->pdo->exec($query);
+        } catch (\Throwable $exception) {
+            throw static::wrapException($exception, $query);
+        }
+    }
+
+    /**
+     * Executes statements from a file.
+     *
+     * @param string|resource $file A file path or a read resource. If a resource is given, it will be read to the end
+     *     end closed.
+     * @throws PDOException
+     * @throws InvalidArgumentException
+     * @throws FileException
+     */
+    public function import($file)
+    {
+        $resource = $this->makeReadResource($file);
+
+        // Maybe it will read and execute the resource statement by statement instead of reading all the resource at
+        // once in the future, but it is not required yet.
+        $sqlText = @stream_get_contents($resource);
+
+        if ($sqlText === false) {
+            $errorInfo = error_get_last();
+            throw new FileException(sprintf(
+                'Failed to read from the resource%s',
+                $errorInfo ? ': '.$errorInfo['message'] : ''
+            ));
+        }
+
+        @fclose($resource);
+        $this->statements($sqlText);
     }
 
     /**
@@ -204,7 +249,7 @@ class Connection
     }
 
     /**
-     * Executes a SQL query and returns the corresponding PDO statement.
+     * Executes a single SQL statement and returns the corresponding PDO statement.
      *
      * @param string $query Full SQL query
      * @param array $values Values to bind. The indexes are the names or numbers of the values.
@@ -212,7 +257,7 @@ class Connection
      * @throws InvalidArgumentException
      * @throws BasePDOException
      */
-    protected function executeQuery(string $query, array $values = []): \PDOStatement
+    protected function executeStatement(string $query, array $values = []): \PDOStatement
     {
         $statement = $this->pdo->prepare($query);
         $this->bindValues($statement, $values);
@@ -268,6 +313,41 @@ class Connection
         }
 
         $statement->bindValue($name, $value, $type);
+    }
+
+    /**
+     * Makes a resource for reading data.
+     *
+     * @param string|resource $source A file path or a read resource
+     * @return resource
+     * @throws FileException
+     * @throws InvalidArgumentException
+     */
+    protected function makeReadResource($source)
+    {
+        if (is_resource($source)) {
+            return $source;
+        }
+
+        if (is_string($source)) {
+            $resource = @fopen($source, 'r');
+
+            if ($resource) {
+                return $resource;
+            }
+
+            $errorInfo = error_get_last();
+            throw new FileException(sprintf(
+                'Unable to open the file `%s` for reading%s',
+                $source,
+                $errorInfo ? ': '.$errorInfo['message'] : ''
+            ));
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'The given source expected to be a file path of a resource, a %s given',
+            is_object($source) ? get_class($source).' instance' : gettype($source)
+        ));
     }
 
     /**

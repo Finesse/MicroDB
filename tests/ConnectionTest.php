@@ -3,6 +3,7 @@
 namespace Finesse\MicroDB\Tests;
 
 use Finesse\MicroDB\Connection;
+use Finesse\MicroDB\Exceptions\FileException;
 use Finesse\MicroDB\Exceptions\InvalidArgumentException;
 use Finesse\MicroDB\Exceptions\PDOException;
 
@@ -14,7 +15,7 @@ use Finesse\MicroDB\Exceptions\PDOException;
 class ConnectionTest extends TestCase
 {
     /**
-     * Tests the create method and the constructor
+     * Tests the `create` method and the constructor
      */
     public function testCreate()
     {
@@ -27,7 +28,7 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * Tests the getPDO method
+     * Tests the `getPDO` method
      */
     public function testGetPDO()
     {
@@ -39,7 +40,7 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * Tests the bindValue method
+     * Tests the `bindValue` method
      */
     public function testBindValue()
     {
@@ -83,7 +84,7 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * Tests the bindValues method
+     * Tests the `bindValues` method
      */
     public function testBindValues()
     {
@@ -124,7 +125,7 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * Tests the select and selectFirst methods
+     * Tests the `select` and `selectFirst` methods
      */
     public function testSelect()
     {
@@ -174,7 +175,7 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * Tests the insert method
+     * Tests the `insert` method
      */
     public function testInsert()
     {
@@ -216,7 +217,7 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * Tests the insertGetId method
+     * Tests the `insertGetId` method
      */
     public function testInsertGetId()
     {
@@ -258,7 +259,7 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * Tests the update method
+     * Tests the `update` method
      */
     public function testUpdate()
     {
@@ -303,7 +304,7 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * Tests the delete method
+     * Tests the `delete` method
      */
     public function testDelete()
     {
@@ -351,7 +352,7 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * Tests the statement method
+     * Tests the `statement` method
      */
     public function testStatement()
     {
@@ -380,6 +381,104 @@ class ConnectionTest extends TestCase
     }
 
     /**
+     * Tests the `statements` method
+     */
+    public function testStatements()
+    {
+        $pdo = new \PDO('sqlite::memory:');
+        $db = new Connection($pdo);
+
+        $db->statements("
+            CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC);
+            INSERT INTO test (name, price) VALUES ('Johny', 991);
+        ");
+
+        // Is table created?
+        $selectStatement = $pdo->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='test'");
+        $selectStatement->execute();
+        $this->assertEquals(['name' => 'test'], $selectStatement->fetch(\PDO::FETCH_ASSOC));
+
+        // Is row created?
+        $selectStatement = $pdo->prepare('SELECT * FROM test ORDER BY id');
+        $selectStatement->execute();
+        $this->assertEquals([
+            ['id' => 1, 'name' => 'Johny', 'price' => 991]
+        ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
+
+        // A statement with a bad query
+        $this->assertException(PDOException::class, function () use ($db) {
+            $db->statements('I AM NOT A SQL');
+        });
+    }
+
+    /**
+     * Tests the `import` method
+     */
+    public function testImport()
+    {
+        $pdo = new \PDO('sqlite::memory:');
+        $db = new Connection($pdo);
+
+        // Import from file path
+        try {
+            $file = tempnam(sys_get_temp_dir(), 'sql_');
+            file_put_contents($file, 'CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
+            $db->import($file);
+            $selectStatement = $pdo->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='test'");
+            $selectStatement->execute();
+            $this->assertEquals(['name' => 'test'], $selectStatement->fetch(\PDO::FETCH_ASSOC));
+        } finally {
+            if ($file) {
+                unlink($file);
+            }
+        }
+
+        // Import from resource
+        $resource = tmpfile();
+        fputs(
+            $resource,
+            "INSERT INTO test (name, price) VALUES ('Jack', 456); INSERT INTO test (name, price) VALUES ('Bob', -10);"
+        );
+        rewind($resource);
+        $db->import($resource);
+        $this->assertFalse(@fclose($resource));
+        $selectStatement = $pdo->prepare("SELECT name FROM test ORDER BY id");
+        $selectStatement->execute();
+        $this->assertEquals([
+            ['name' => 'Jack'],
+            ['name' => 'Bob'],
+        ], $selectStatement->fetchAll(\PDO::FETCH_ASSOC));
+
+        // Wrong argument
+        $this->assertException(InvalidArgumentException::class, function () use ($db) {
+            $db->import(['foo', 'bar']);
+        }, function (InvalidArgumentException $exception) {
+            $this->assertEquals(
+                'The given source expected to be a file path of a resource, a array given',
+                $exception->getMessage()
+            );
+        });
+
+        // Invalid file path
+        $this->assertException(FileException::class, function () use ($db) {
+            $db->import('/foo/bar/baz/__impossible_GbLjHfC');
+        }, function (FileException $exception) {
+            $this->assertStringStartsWith(
+                'Unable to open the file `/foo/bar/baz/__impossible_GbLjHfC` for reading',
+                $exception->getMessage()
+            );
+        });
+
+        // Unreadable resource
+        $resource = imagecreatetruecolor(1, 1);
+        $this->assertException(FileException::class, function () use ($db, $resource) {
+            $db->import($resource);
+        }, function (FileException $exception) {
+            $this->assertStringStartsWith('Failed to read from the resource', $exception->getMessage());
+        });
+    }
+
+    /**
      * Tests mixed parameters keys types (named and anonymous)
      */
     public function testMixedParametersKeys()
@@ -403,7 +502,7 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * Tests that query methods throw proper exception on an invalid parameters argument
+     * Tests that the query methods throw proper exception on an invalid parameters argument
      */
     public function testInvalidParameters()
     {
@@ -415,7 +514,6 @@ class ConnectionTest extends TestCase
         $this->assertException(InvalidArgumentException::class, function () use ($db) {
             $db->insert('INSERT INTO test VALUES (?, ?, ?)', [[1, 'Name', 111]]);
         });
-
     }
 
     /**

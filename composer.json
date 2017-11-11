@@ -18,6 +18,7 @@
 	"require-dev": {
 		"ext-Reflection": "*",
 		"ext-pdo_sqlite": "*",
+		"ext-gd": "*",
 		"phpunit/phpunit": "^6.4",
 		"mockery/mockery": "^1.0"
 	},

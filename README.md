@@ -121,7 +121,32 @@ Perform any other statement:
 $database->statement('CREATE TABLE table(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
 ```
 
-The method returns nothing.
+If the query contains multiple statements separated by a semicolon, only the first statement will be executed. You can
+execute multiple statements using the other method:
+
+```php
+$database->statements("
+    CREATE TABLE table(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC);
+    INSERT INTO table (name, price) VALUES ('Donald', 1000000);
+");
+```
+
+The lack of this method is that it doesn't take values to bind.
+
+### Execute a file
+
+Execute the query from a file:
+
+```php
+$database->import('path/to/file');
+```
+
+Or from a resource:
+
+```php
+$stream = fopen('path/to/file', 'r');
+$database->import($stream);
+```
 
 ### Binding values
 
@@ -136,8 +161,8 @@ $rows = $database->select("SELECT * FROM table WHERE name = '".$name."' LIMIT ".
 $rows = $database->select('SELECT * FROM table WHERE name = ? LIMIT ?', [$name, $limit]);
 ```
 
-The database server replaces the placeholders (`?`s) safely with the given values. All the above methods accept the 
-list of the bound values as the second argument.
+The database server replaces the placeholders (`?`s) safely with the given values. Almost all the above methods accept 
+the list of the bound values as the second argument.
 
 You can also use named parameters:
 
@@ -162,6 +187,8 @@ $bindings = $exception->getValues();
 ``` 
 
 The `Finesse\MicroDB\Exceptions\InvalidArgumentException` is thrown when the method arguments have a wrong format.
+
+The `Finesse\MicroDB\Exceptions\FileException` is thrown on a file read fail.
 
 All exceptions implement `Finesse\MicroDB\IException`.
 
