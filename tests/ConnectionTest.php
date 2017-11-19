@@ -6,6 +6,7 @@ use Finesse\MicroDB\Connection;
 use Finesse\MicroDB\Exceptions\FileException;
 use Finesse\MicroDB\Exceptions\InvalidArgumentException;
 use Finesse\MicroDB\Exceptions\PDOException;
+use PDOException as BasePDOException;
 
 /**
  * Tests the DB class.
@@ -558,5 +559,57 @@ class ConnectionTest extends TestCase
             $this->assertCount(9, $exception->getValues());
             $this->assertInstanceOf(\PDOException::class, $exception->getPrevious());
         });
+    }
+
+    /**
+     * Tests that everything works with MySQL
+     *
+     * @link https://docs.travis-ci.com/user/database-setup/#MySQL Credentials for testing MySQL in Travis CI
+     */
+    public function testMySQL()
+    {
+        try {
+            $pdo = new \PDO('mysql:host=localhost;dbname=test;charset=UTF8', 'travis', '');
+        } catch (BasePDOException $exception) {
+            $this->markTestSkipped('MySQL is not available');
+            return;
+        }
+
+        $db = new Connection($pdo);
+
+        try {
+            // Multiple statements in one query
+            $db->statements("
+                CREATE TABLE `users` (
+                    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                    `name` VARCHAR (255) NOT NULL,
+                    `email` VARCHAR (255) DEFAULT NULL,
+                    PRIMARY KEY (`id`),
+                    KEY `email` (`email`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+                
+                CREATE TABLE `posts` (
+                    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                    `user_id` INT(10) UNSIGNED NOT NULL,
+                    `title` VARCHAR (255) NOT NULL DEFAULT '',
+                    `text` MEDIUMTEXT NOT NULL DEFAULT '',
+                    PRIMARY KEY (`id`),
+                    KEY `user_id` (`user_id`),
+                    KEY `title` (`title`)
+                ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+            ");
+            $tables = $pdo->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
+            $this->assertContains('users', $tables);
+            $this->assertContains('posts', $tables);
+
+            // Insert and get ID
+            $this->assertEquals(
+                1,
+                $db->insertGetId("INSERT INTO `users` (`name`, `email`) VALUES (?, ?)", ['Bill', 'bill@example.com'])
+            );
+        } finally {
+            $pdo->exec('DROP TABLE IF EXISTS `users`');
+            $pdo->exec('DROP TABLE IF EXISTS `posts`');
+        }
     }
 }

@@ -4,9 +4,13 @@ php:
     - 7.1
     - 7.2
 
+services:
+    - mysql
+
 install:
     - composer install
     - composer require satooshi/php-coveralls --dev
+    - mysql -e 'CREATE DATABASE IF NOT EXISTS test'
 
 script:
     - ./vendor/bin/phpunit --coverage-clover ./tests/logs/clover.xml
