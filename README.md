@@ -204,6 +204,8 @@ You _must not_ change the retrieved object, otherwise something unexpected will 
 ## Known problems
 
 * `insertGetId` doesn't return the inserted row identifier for SQL Server and PostgreSQL.
+* `statements` and `import` don't throw an exception if the second or a next statement of the query has an error. This 
+  is [a PDO bug](https://stackoverflow.com/a/28867491/1118709).
 
 Make a pull request or an issue if you need the problem to be fixed.
 
