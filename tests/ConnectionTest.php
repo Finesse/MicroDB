@@ -422,11 +422,18 @@ class ConnectionTest extends TestCase
         // Import from file path
         try {
             $file = tempnam(sys_get_temp_dir(), 'sql_');
-            file_put_contents($file, 'CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC)');
+            file_put_contents($file, '
+                CREATE TABLE test(id INTEGER PRIMARY KEY ASC, name TEXT, price NUMERIC);
+                CREATE TABLE test2(id INTEGER PRIMARY KEY ASC, text TEXT);
+            ');
             $db->import($file);
-            $this->assertNotEmpty($pdo
-                ->query("SELECT * FROM sqlite_master WHERE type='table' AND name='test'")
-                ->fetchAll());
+            $this->assertEquals(
+                [
+                    ['name' => 'test'],
+                    ['name' => 'test2']
+                ],
+                $pdo->query("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")->fetchAll()
+            );
         } finally {
             if ($file) {
                 unlink($file);
