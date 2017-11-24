@@ -108,7 +108,16 @@ class PDOException extends BasePDOException implements IException
             return 'a '.get_class($value).' instance';
         }
         if (is_array($value)) {
-            return '['.implode(', ', array_map([$this, 'valueToString'], $value)).']';
+            $keys = array_keys($value);
+            $isAssociative = $keys !== array_keys($keys);
+            $valuesStrings = [];
+
+            foreach ($value as $key => $subValue) {
+                $valuesStrings[] = ($isAssociative ? $this->valueToString($key).' => ' : '')
+                    . $this->valueToString($subValue);
+            }
+
+            return '['.implode(', ', $valuesStrings).']';
         }
         if (is_resource($value)) {
             return 'a resource';

@@ -524,7 +524,7 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * Tests that a thrown PDOException contains a proper information
+     * Tests that a thrown PDOException gets a proper information
      */
     public function testPDOErrorInfo()
     {
@@ -533,30 +533,19 @@ class ConnectionTest extends TestCase
         }, function (PDOException $exception) {
             $this->assertEquals('', $exception->getQuery());
             $this->assertEquals([], $exception->getValues());
+            $this->assertInstanceOf(\PDOException::class, $exception->getPrevious());
         });
 
         $db = Connection::create('sqlite::memory:');
         $this->assertException(PDOException::class, function () use ($db) {
-            $db->select('INCORRECT SQL FOR ERROR', [
-                true,
-                false,
-                null,
-                1234,
-                'short string',
-                "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
-                new PDOException(),
-                fopen('php://temp', 'r'),
-                [1, 2, 3]
-            ]);
+            $db->select('INCORRECT SQL FOR ERROR', ['foo', 'bar', 123]);
         }, function (PDOException $exception) {
             $this->assertStringEndsWith(
-                '; SQL query: (INCORRECT SQL FOR ERROR); bound values: [true, false, null, 1234, "short string"'
-                . ', "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been'
-                . ' t...", a Finesse\\MicroDB\\Exceptions\\PDOException instance, a resource, [1, 2, 3]]',
+                '; SQL query: (INCORRECT SQL FOR ERROR); bound values: ["foo", "bar", 123]',
                 $exception->getMessage()
             );
             $this->assertEquals('INCORRECT SQL FOR ERROR', $exception->getQuery());
-            $this->assertCount(9, $exception->getValues());
+            $this->assertEquals(['foo', 'bar', 123], $exception->getValues());
             $this->assertInstanceOf(\PDOException::class, $exception->getPrevious());
         });
     }
