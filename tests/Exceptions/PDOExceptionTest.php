@@ -60,6 +60,13 @@ class PDOExceptionTest extends TestCase
                 . ' [0 => "one", "key" => "two", 1 => ["a" => "A", "b" => "B"], 423 => "four"]',
             $exception->getMessage()
         );
+
+        // No query text and no bound values
+        $exception = new PDOException('It\'s a test');
+        $this->assertEquals('It\'s a test', $exception->getMessage());
+        $this->assertEquals('', $exception->getQuery());
+        $this->assertEquals([], $exception->getValues());
+        $this->assertNull($exception->getPrevious());
     }
 
     /**
