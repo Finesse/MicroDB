@@ -19,7 +19,7 @@ Key features:
 * No silly query builder, only a good old SQL.
 * Very light, no external dependencies.
   It required only the [PDO extension](http://php.net/manual/en/book.pdo.php) which is available by default in most of servers.
-* Database object is delivered explicitly, not throw a static class.
+* Database object is delivered explicitly, not through a static class.
 * Exceptions on errors.
 
 You can combine it with a third-party SQL query builder to rock the database. Examples of suitable query builders:
@@ -135,7 +135,7 @@ The lack of this method is that it doesn't take values to bind.
 
 ### Execute a file
 
-Execute the query from a SQL file:
+Execute the query from an SQL file:
 
 ```php
 $database->import('path/to/file.sql');
@@ -150,7 +150,7 @@ $database->import($stream);
 
 ### Binding values
 
-You should not insert values right to a SQL query because it can cause 
+You should not insert values right to an SQL query because it can cause 
 [SQL injections](https://en.wikipedia.org/wiki/SQL_injection). Instead use the binding:
 
 ```php
@@ -161,7 +161,7 @@ $rows = $database->select("SELECT * FROM table WHERE name = '".$name."' LIMIT ".
 $rows = $database->select('SELECT * FROM table WHERE name = ? LIMIT ?', [$name, $limit]);
 ```
 
-The database server replaces the placeholders (`?`s) safely with the given values. Almost all the above methods accept 
+Database server replaces the placeholders (`?`s) safely with the given values. Almost all the above methods accepts 
 the list of the bound values as the second argument.
 
 You can also use named parameters:
@@ -173,12 +173,12 @@ $rows = $database->select('SELECT * FROM table WHERE name = :name LIMIT :limit',
 You can even pass named and anonymous parameters in the same array but it works only when the array of values has the 
 same order as the placeholders in the query text.
 
-All scalar types of values are supported: string, integer, float, boolean and null.
+All the scalar types of values are supported: string, integer, float, boolean and null.
 
 ### Error handling
 
 The `Finesse\MicroDB\Exceptions\PDOException` is thrown in case of every database query error. If an error is caused
-by a SQL query, the exception has the query text and bound values in the message. They are also available through the
+by an SQL query, the exception has the query text and bound values in the message. They are also available through the
 methods:
 
 ```php
@@ -207,7 +207,7 @@ You _must not_ change the retrieved object, otherwise something unexpected will 
 * `statements` and `import` don't throw an exception if the second or a next statement of the query has an error. This 
   is [a PDO bug](https://stackoverflow.com/a/28867491/1118709).
 
-Make a pull request or an issue if you need the problem to be fixed.
+Make a pull request or an issue if you need a problem to be fixed.
 
 
 ## Versions compatibility
