@@ -34,7 +34,7 @@ You can combine it with a third-party SQL query builder to rock the database. Ex
 
 ## Installation
 
-### Using [composer](https://getcomposer.org)
+### Using [Composer](https://getcomposer.org)
 
 Run in a console
 
