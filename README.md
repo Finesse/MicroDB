@@ -2,7 +2,8 @@
 
 [![Latest Stable Version](https://poser.pugx.org/finesse/micro-db/v/stable)](https://packagist.org/packages/finesse/micro-db)
 [![Total Downloads](https://poser.pugx.org/finesse/micro-db/downloads)](https://packagist.org/packages/finesse/micro-db)
-[![Build Status](https://php-eye.com/badge/finesse/micro-db/tested.svg)](https://travis-ci.org/FinesseRus/MicroDB)
+![PHP from Packagist](https://img.shields.io/packagist/php-v/finesse/micro-db.svg)
+[![Build Status](https://travis-ci.org/FinesseRus/MicroDB.svg?branch=master)](https://travis-ci.org/FinesseRus/MicroDB)
 [![Coverage Status](https://coveralls.io/repos/github/FinesseRus/MicroDB/badge.svg?branch=master)](https://coveralls.io/github/FinesseRus/MicroDB?branch=master)
 [![Dependency Status](https://www.versioneye.com/php/finesse:micro-db/badge)](https://www.versioneye.com/php/finesse:micro-db)
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/86ca4104-f2d4-4064-a0d3-bba5a4aa2fe2/mini.png)](https://insight.sensiolabs.com/projects/86ca4104-f2d4-4064-a0d3-bba5a4aa2fe2)
