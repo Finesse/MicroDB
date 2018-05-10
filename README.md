@@ -3,8 +3,8 @@
 [![Latest Stable Version](https://poser.pugx.org/finesse/micro-db/v/stable)](https://packagist.org/packages/finesse/micro-db)
 [![Total Downloads](https://poser.pugx.org/finesse/micro-db/downloads)](https://packagist.org/packages/finesse/micro-db)
 ![PHP from Packagist](https://img.shields.io/packagist/php-v/finesse/micro-db.svg)
-[![Build Status](https://travis-ci.org/FinesseRus/MicroDB.svg?branch=master)](https://travis-ci.org/FinesseRus/MicroDB)
-[![Coverage Status](https://coveralls.io/repos/github/FinesseRus/MicroDB/badge.svg?branch=master)](https://coveralls.io/github/FinesseRus/MicroDB?branch=master)
+[![Build Status](https://travis-ci.org/Finesse/MicroDB.svg?branch=master)](https://travis-ci.org/Finesse/MicroDB)
+[![Coverage Status](https://coveralls.io/repos/github/Finesse/MicroDB/badge.svg?branch=master)](https://coveralls.io/github/Finesse/MicroDB?branch=master)
 [![Dependency Status](https://www.versioneye.com/php/finesse:micro-db/badge)](https://www.versioneye.com/php/finesse:micro-db)
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/86ca4104-f2d4-4064-a0d3-bba5a4aa2fe2/mini.png)](https://insight.sensiolabs.com/projects/86ca4104-f2d4-4064-a0d3-bba5a4aa2fe2)
 
@@ -24,7 +24,7 @@ Key features:
 * Exceptions on errors.
 
 You can combine it with a third-party SQL query builder to rock the database. Examples of suitable query builders:
-[Query Scribe](https://github.com/FinesseRus/QueryScribe),
+[Query Scribe](https://github.com/Finesse/QueryScribe),
 [Nilportugues SQL Query Builder](https://github.com/nilportugues/php-sql-query-builder), 
 [Aura.SqlQuery](https://github.com/auraphp/Aura.SqlQuery),
 [Latitude](https://github.com/shadowhand/latitude),
@@ -156,7 +156,7 @@ You should not insert values right to an SQL query because it can cause
 
 ```php
 // WRONG! Don't do it or you will be fired
-$rows = $database->select("SELECT * FROM table WHERE name = '".$name."' LIMIT ".$limit);
+$rows = $database->select("SELECT * FROM table WHERE name = '$name' LIMIT $limit");
 
 // Good
 $rows = $database->select('SELECT * FROM table WHERE name = ? LIMIT ?', [$name, $limit]);
