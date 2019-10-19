@@ -3,10 +3,9 @@
 [![Latest Stable Version](https://poser.pugx.org/finesse/micro-db/v/stable)](https://packagist.org/packages/finesse/micro-db)
 [![Total Downloads](https://poser.pugx.org/finesse/micro-db/downloads)](https://packagist.org/packages/finesse/micro-db)
 ![PHP from Packagist](https://img.shields.io/packagist/php-v/finesse/micro-db.svg)
-[![Build Status](https://travis-ci.org/Finesse/MicroDB.svg?branch=master)](https://travis-ci.org/Finesse/MicroDB)
-[![Coverage Status](https://coveralls.io/repos/github/Finesse/MicroDB/badge.svg?branch=master)](https://coveralls.io/github/Finesse/MicroDB?branch=master)
-[![Dependency Status](https://www.versioneye.com/php/finesse:micro-db/badge)](https://www.versioneye.com/php/finesse:micro-db)
-[![SensioLabsInsight](https://insight.sensiolabs.com/projects/86ca4104-f2d4-4064-a0d3-bba5a4aa2fe2/mini.png)](https://insight.sensiolabs.com/projects/86ca4104-f2d4-4064-a0d3-bba5a4aa2fe2)
+[![Test Status](https://github.com/finesse/MicroDB/workflows/Test/badge.svg)](https://github.com/Finesse/MicroDB/actions?workflow=Test)
+[![Maintainability](https://api.codeclimate.com/v1/badges/f4d3bcbd54c012ef4eaf/maintainability)](https://codeclimate.com/github/Finesse/MicroDB/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/f4d3bcbd54c012ef4eaf/test_coverage)](https://codeclimate.com/github/Finesse/MicroDB/test_coverage)
 
 Like to use pure SQL but don't like to suffer from PDO, mysqli or etc.? Try this.
 

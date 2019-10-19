@@ -552,15 +552,17 @@ class ConnectionTest extends TestCase
 
     /**
      * Tests that everything works with MySQL
-     *
-     * @link https://docs.travis-ci.com/user/database-setup/#MySQL Credentials for testing MySQL in Travis CI
      */
     public function testMySQL()
     {
         try {
-            $pdo = new \PDO('mysql:host=localhost;dbname=test;charset=UTF8', 'travis', '');
+            // The credentials are set in the GitHub workflow file
+            $pdo = new \PDO(
+                'mysql:host=127.0.0.1;port='.getenv('MYSQL_PORT').';dbname=test;charset=UTF8',
+                'root', 'password'
+            );
         } catch (BasePDOException $exception) {
-            $this->markTestSkipped('MySQL is not available');
+            $this->markTestSkipped('MySQL is not available: '.$exception->getMessage());
             return;
         }
 

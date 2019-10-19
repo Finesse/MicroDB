@@ -83,9 +83,6 @@ class PDOException extends BasePDOException implements IException
 
     /**
      * Converts an arbitrary value to string for a debug message.
-     *
-     * @param mixed $value
-     * @return string
      */
     protected function valueToString($value): string
     {
@@ -99,29 +96,45 @@ class PDOException extends BasePDOException implements IException
             return 'null';
         }
         if (is_string($value)) {
-            if (call_user_func(function_exists('mb_strlen') ? 'mb_strlen' : 'strlen', $value) > 100) {
-                $value = call_user_func(function_exists('mb_substr') ? 'mb_substr' : 'substr', $value, 0, 97).'...';
-            }
-            return '"'.$value.'"';
+            return $this->stringValueToString($value);
         }
         if (is_object($value)) {
             return 'a '.get_class($value).' instance';
         }
         if (is_array($value)) {
-            $keys = array_keys($value);
-            $isAssociative = $keys !== array_keys($keys);
-            $valuesStrings = [];
-
-            foreach ($value as $key => $subValue) {
-                $valuesStrings[] = ($isAssociative ? $this->valueToString($key).' => ' : '')
-                    . $this->valueToString($subValue);
-            }
-
-            return '['.implode(', ', $valuesStrings).']';
+            return $this->arrayValueToString($value);
         }
         if (is_resource($value)) {
             return 'a resource';
         }
         return (string)$value;
+    }
+
+    /**
+     * Converts an string value to string for a debug message.
+     */
+    protected function stringValueToString(string $value): string
+    {
+        if (call_user_func(function_exists('mb_strlen') ? 'mb_strlen' : 'strlen', $value) > 100) {
+            $value = call_user_func(function_exists('mb_substr') ? 'mb_substr' : 'substr', $value, 0, 97).'...';
+        }
+        return '"'.$value.'"';
+    }
+
+    /**
+     * Converts an array value to string for a debug message.
+     */
+    protected function arrayValueToString(array $value): string
+    {
+        $keys = array_keys($value);
+        $isAssociative = $keys !== array_keys($keys);
+        $valuesStrings = [];
+
+        foreach ($value as $key => $subValue) {
+            $valuesStrings[] = ($isAssociative ? $this->valueToString($key).' => ' : '')
+                . $this->valueToString($subValue);
+        }
+
+        return '['.implode(', ', $valuesStrings).']';
     }
 }
