@@ -25,10 +25,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
       - name: Install PHP
-        uses: shivammathur/setup-php@1.4.3
+        uses: shivammathur/setup-php@1.4.4
         with:
           php-version: ${{ matrix.php-version }}
-          extension-csv: dom, mbstring, pdo, sqlite, mysql, gd
+          extension-csv: dom, mbstring, pdo, pdo_sqlite, pdo_mysql, gd
       - name: Install dependencies
         run: |
           if [[ ${{ matrix.dependencies }} = high ]]
