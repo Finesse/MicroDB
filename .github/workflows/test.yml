@@ -37,7 +37,7 @@ jobs:
           fi
       - name: Test and publish code coverage
         if: matrix.report-coverage
-        uses: paambaati/codeclimate-action@v2.2.1
+        uses: paambaati/codeclimate-action@v2.3.0
         env:
           MYSQL_PORT: ${{ job.services.mysql.ports['3306'] }}
 
@@ -46,6 +46,7 @@ jobs:
         with:
           # The report file must be there, otherwise Code Climate won't find it
           coverageCommand: php vendor/bin/phpunit --coverage-text --coverage-clover ./clover.xml
+          debug: true
       - name: Test
         if: "!matrix.report-coverage"
         run: php vendor/bin/phpunit --coverage-text
